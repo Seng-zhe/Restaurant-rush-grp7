@@ -20,7 +20,7 @@ skinparam note {
   BorderColor #B8A040
 }
 
-title Restaurant Rush: class diagram (v4 draft)
+title Restaurant Rush: class diagram (v5 draft)
 
 package "Boundary" #F4F4F4 {
   class ConsoleUI {
@@ -45,6 +45,7 @@ package "Boundary" #F4F4F4 {
 package "Control" #F4F4F4 {
   class GameController {
     + {static} MAX_TURNS : int = 18
+    + {static} TABLE_COUNT : int = 2
     - turn : int
     + startTurn() : List<String>
     + snapshot() : GameSnapshot
@@ -92,17 +93,31 @@ package "Control" #F4F4F4 {
   }
 
   class ArrivalSchedule {
-    - arrivalTurns : int[]
-    + customerArrivingOn(turn : int) : Customer
+    - {static} ARRIVAL_TURNS : int[]
+    - nextId : int
+    + customerArrivingOn(turn : int) : Optional<Customer>
   }
 }
 
 package "Entity" #F4F4F4 {
   class Restaurant {
-    - revenueCents : int
+    + {static} TARGET_PAID : int = 4
+    + {static} TARGET_REVENUE_CENTS : int = 4500
+    + {static} TARGET_SATISFACTION : int = 60
     - queue : Deque<Customer>
     - paidCustomers : List<Customer>
-    + freeTable() : Table
+    - revenueCents : int
+    - servedCount : int
+    - departures : int
+    + addArrival(c : Customer) : void
+    + seat(c : Customer, t : Table) : void
+    + recordServed() : void
+    + recordPayment(c : Customer) : void
+    + recordDeparture(c : Customer) : void
+    + findPresentCustomer(id : int) : Optional<Customer>
+    + presentCustomers() : List<Customer>
+    + freeTable() : Optional<Table>
+    + tableOf(c : Customer) : Optional<Table>
     + averageSatisfaction() : OptionalDouble
     + isVictory() : boolean
   }
@@ -250,6 +265,7 @@ GameSnapshot *-- "2" TableView : tables
 TableView --> "0..1" CustomerView : occupant
 GameController ..> ActionResult : returns
 GameController --> "1" ArrivalSchedule
+ArrivalSchedule ..> Customer : creates
 GameController --> "1" Restaurant
 GameController --> "0..1" HappyHour
 GameController *-- "1..*" StaffMember : staff
