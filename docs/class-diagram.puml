@@ -1,0 +1,241 @@
+@startuml class-diagram
+' Restaurant Rush class diagram, v1 (design draft).
+' Edit this file, then re-render:
+'   java -jar plantuml.jar docs/class-diagram.puml
+' Keep it in step with the code at each stage tag.
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 50
+skinparam defaultFontName Helvetica
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #555555
+  ArrowColor #555555
+}
+skinparam note {
+  BackgroundColor #FFF8DC
+  BorderColor #B8A040
+}
+
+title Restaurant Rush: class diagram (v1 draft)
+
+package "Boundary" #F4F4F4 {
+  class ConsoleUI {
+    - scanner : Scanner
+    - controller : GameController
+    + run() : void
+    - showTurnStart() : void
+    - showTurnEnd() : void
+    - readInt(prompt : String) : int
+  }
+}
+
+package "Control" #F4F4F4 {
+  class GameController {
+    - turn : int
+    - arrivals : ArrivalSchedule
+    + startTurn() : void
+    + waiterSeat(c : Customer, t : Table) : ActionResult
+    + waiterTakeOrder(c : Customer) : ActionResult
+    + waiterServe(o : Order) : ActionResult
+    + chefWork(o : Order) : ActionResult
+    + endTurn() : void
+    + isGameOver() : boolean
+  }
+
+  class ActionResult {
+    - ok : boolean
+    - message : String
+    + ok() : boolean
+    + message() : String
+  }
+
+  class ArrivalSchedule {
+    - arrivalTurns : int[]
+    + customerArrivingOn(turn : int) : Customer
+  }
+}
+
+package "Entity" #F4F4F4 {
+  class Restaurant {
+    - revenueCents : int
+    - queue : Deque<Customer>
+    - paidCustomers : List<Customer>
+    + freeTable() : Table
+    + averageSatisfaction() : OptionalDouble
+    + isVictory() : boolean
+  }
+
+  class Table {
+    - id : int
+    - occupant : Customer
+    + isFree() : boolean
+    + seat(c : Customer) : void
+    + clear() : void
+  }
+
+  abstract class Customer {
+    - id : int
+    - satisfaction : int
+    - status : CustomerStatus
+    - servedTurn : int
+    - readyToPayTurn : int
+    + {abstract} waitingPenalty() : int
+    + discountPercent() : int
+    + chooseFood(menu : Menu) : Orderable
+    + onServed(o : Order, turn : int) : void
+    + loseSatisfaction(points : int) : void
+  }
+
+  class RegularCustomer {
+    + waitingPenalty() : int
+  }
+
+  class VIPCustomer <<Stage 2>> #E8F0FE {
+    + waitingPenalty() : int
+    + discountPercent() : int
+  }
+
+  class CriticCustomer <<Stage 2>> #E8F0FE {
+    + waitingPenalty() : int
+    + onServed(o : Order, turn : int) : void
+  }
+
+  class Order {
+    - unitsDone : int
+    - billCents : int
+    - status : OrderStatus
+    + advance() : void
+    + isReady() : boolean
+    + lockBill(cents : int) : void
+  }
+
+  interface Orderable {
+    + name() : String
+    + priceCents() : int
+    + prepUnits() : int
+  }
+
+  enum MenuItem {
+    SALAD
+    BURGER
+    PASTA
+    - priceCents : int
+    - prepUnits : int
+  }
+
+  class ComboMeal <<Stage 3>> #FDEBD0 {
+    - first : Orderable
+    - second : Orderable
+    + priceCents() : int
+    + prepUnits() : int
+  }
+
+  class Menu {
+    + items() : List<Orderable>
+  }
+
+  class HappyHour <<Stage 3>> #FDEBD0 {
+    - turnsLeft : int
+    - used : boolean
+    + activate() : ActionResult
+    + isActive() : boolean
+    + tick() : void
+  }
+
+  abstract class StaffMember {
+    - usedThisTurn : boolean
+    + resetForTurn() : void
+    + hasActed() : boolean
+  }
+
+  class Waiter
+  class Chef
+  class Cashier {
+    + collectPayment(r : Restaurant, turn : int) : void
+  }
+  class Host <<Stage 3>> #FDEBD0 {
+    + seat(c : Customer, t : Table) : ActionResult
+  }
+
+  enum CustomerStatus {
+    WAITING
+    SEATED
+    ORDERED
+    SERVED
+    READY_TO_PAY
+    PAID
+    LEFT
+  }
+
+  enum OrderStatus {
+    IN_PREPARATION
+    READY
+    SERVED
+    PAID
+    CANCELLED
+  }
+}
+
+' ---- Relationships ----
+ConsoleUI --> "1" GameController : sends choices to
+GameController ..> ActionResult : returns
+GameController --> "1" ArrivalSchedule
+GameController --> "1" Restaurant
+GameController --> "0..1" HappyHour
+GameController *-- "1..*" StaffMember : staff
+
+Restaurant *-- "2" Table
+Restaurant o-- "0..*" Customer
+Restaurant --> "1" Menu
+Table --> "0..1" Customer : occupant
+
+Customer <|-- RegularCustomer
+Customer <|-- VIPCustomer
+Customer <|-- CriticCustomer
+Customer --> "0..1" Order
+Customer --> CustomerStatus
+
+Order --> "1" Orderable : item
+Order --> OrderStatus
+Menu o-- "3..*" Orderable
+
+Orderable <|.. MenuItem
+Orderable <|.. ComboMeal
+ComboMeal *-- "2" Orderable : components
+
+StaffMember <|-- Waiter
+StaffMember <|-- Chef
+StaffMember <|-- Cashier
+StaffMember <|-- Host
+
+' ---- Annotations for the marking criteria ----
+note right of Customer
+  <b>Polymorphism</b>: GameController calls
+  waitingPenalty(), discountPercent() and
+  onServed() without checking the type.
+  New customer types need no controller change.
+end note
+
+note bottom of ComboMeal
+  <b>Composition</b>: a combo is built from two
+  Orderables; price = 90% of their sum,
+  units = sum of their units.
+end note
+
+note left of Order
+  <b>Encapsulation</b>: status changes only
+  through advance() and lockBill(); the bill
+  is locked when the order is taken.
+end note
+
+legend right
+  White: Stage 1
+  Blue: added in Stage 2
+  Orange: added in Stage 3
+endlegend
+
+@enduml
