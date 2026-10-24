@@ -1,10 +1,11 @@
 package restaurantrush;
 
+import restaurantrush.boundary.ConsoleUI;
+import restaurantrush.boundary.InputReader;
+import restaurantrush.control.GameController;
+
 /**
  * Entry point for Restaurant Rush.
- *
- * <p>Placeholder so the project builds from day one. Replace the body with
- * the real start-up once {@code ConsoleUI} and {@code GameController} exist.</p>
  */
 public final class Main {
 
@@ -12,11 +13,12 @@ public final class Main {
     }
 
     /**
-     * Starts the game.
+     * Starts a game in the base setting.
      *
      * @param args command-line arguments (not used)
      */
     public static void main(String[] args) {
-        System.out.println("Restaurant Rush: project skeleton builds and runs.");
+        InputReader input = new InputReader(System.in, System.out);
+        new ConsoleUI(new GameController(), input, System.out).run();
     }
 }

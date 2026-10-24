@@ -20,37 +20,75 @@ skinparam note {
   BorderColor #B8A040
 }
 
-title Restaurant Rush: class diagram (v1 draft)
+title Restaurant Rush: class diagram (v3 draft)
 
 package "Boundary" #F4F4F4 {
   class ConsoleUI {
-    - scanner : Scanner
     - controller : GameController
+    - input : InputReader
     + run() : void
-    - showTurnStart() : void
-    - showTurnEnd() : void
-    - readInt(prompt : String) : int
+    - playTurn() : void
+    - showTurnStart(s : GameSnapshot) : void
+    - showTurnEnd(s : GameSnapshot) : void
+    - askUntilAccepted(choice : Supplier<ActionResult>) : void
+    ~ {static} money(cents : int) : String
+  }
+
+  class InputReader {
+    - scanner : Scanner
+    - echo : boolean
+    + readInt(prompt : String, min : int, max : int) : int
+    + readCustomerId(prompt : String) : int
   }
 }
 
 package "Control" #F4F4F4 {
   class GameController {
+    + {static} MAX_TURNS : int = 18
     - turn : int
-    - arrivals : ArrivalSchedule
-    + startTurn() : void
-    + waiterSeat(c : Customer, t : Table) : ActionResult
-    + waiterTakeOrder(c : Customer) : ActionResult
-    + waiterServe(o : Order) : ActionResult
-    + chefWork(o : Order) : ActionResult
-    + endTurn() : void
+    + startTurn() : List<String>
+    + snapshot() : GameSnapshot
+    + waiterSeat(customerId : int) : ActionResult
+    + waiterTakeOrder(customerId : int) : ActionResult
+    + waiterServe(customerId : int) : ActionResult
+    + waiterWait() : ActionResult
+    + chefWork(customerId : int) : ActionResult
+    + chefWait() : ActionResult
+    + endTurn() : List<String>
     + isGameOver() : boolean
+    + isVictory() : boolean
   }
 
-  class ActionResult {
-    - ok : boolean
-    - message : String
-    + ok() : boolean
-    + message() : String
+  class GameSnapshot <<record>> {
+    + turn : int
+    + revenueCents : int
+    + averageSatisfaction : OptionalDouble
+    + paidCount : int
+    + servedCount : int
+    + departures : int
+  }
+
+  class CustomerView <<record>> {
+    + id : int
+    + type : String
+    + satisfaction : int
+    + status : String
+    + item : String
+    + unitsDone : int
+    + unitsTotal : int
+    + orderStatus : String
+  }
+
+  class TableView <<record>> {
+    + number : int
+    + isFree() : boolean
+  }
+
+  class ActionResult <<record>> {
+    + ok : boolean
+    + message : String
+    + {static} success(m : String) : ActionResult
+    + {static} failure(r : String) : ActionResult
   }
 
   class ArrivalSchedule {
@@ -152,8 +190,14 @@ package "Entity" #F4F4F4 {
     + hasActed() : boolean
   }
 
-  class Waiter
-  class Chef
+  class Waiter {
+    + seat(c : Customer, t : Table) : ActionResult
+    + takeOrder(c : Customer, menu : Menu, price : int) : ActionResult
+    + serve(o : Order, turn : int) : ActionResult
+  }
+  class Chef {
+    + prepare(o : Order) : ActionResult
+  }
   class Cashier {
     + collectPayment(r : Restaurant, turn : int) : void
   }
@@ -182,6 +226,12 @@ package "Entity" #F4F4F4 {
 
 ' ---- Relationships ----
 ConsoleUI --> "1" GameController : sends choices to
+ConsoleUI *-- "1" InputReader
+ConsoleUI ..> GameSnapshot : displays
+GameController ..> GameSnapshot : builds
+GameSnapshot *-- "0..*" CustomerView : waitingQueue
+GameSnapshot *-- "2" TableView : tables
+TableView --> "0..1" CustomerView : occupant
 GameController ..> ActionResult : returns
 GameController --> "1" ArrivalSchedule
 GameController --> "1" Restaurant
@@ -212,6 +262,11 @@ StaffMember <|-- Chef
 StaffMember <|-- Cashier
 StaffMember <|-- Host
 
+Waiter ..> Order : serves
+Chef ..> Order : prepares
+Cashier ..> Customer : charges
+Host ..> Table : seats at
+
 ' ---- Annotations for the marking criteria ----
 note right of Customer
   <b>Polymorphism</b>: GameController calls
@@ -224,6 +279,18 @@ note bottom of ComboMeal
   <b>Composition</b>: a combo is built from two
   Orderables; price = 90% of their sum,
   units = sum of their units.
+end note
+
+note top of StaffMember
+  <b>Inheritance</b>: each staff member is limited
+  to one task per turn through usedThisTurn,
+  reset by resetForTurn() at the start of a turn.
+end note
+
+note right of GameSnapshot
+  <b>Encapsulation</b>: the UI only receives
+  read-only records, never real entities,
+  so it cannot change game state.
 end note
 
 note left of Order
