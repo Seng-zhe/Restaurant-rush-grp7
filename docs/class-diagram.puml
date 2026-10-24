@@ -20,7 +20,7 @@ skinparam note {
   BorderColor #B8A040
 }
 
-title Restaurant Rush: class diagram (v3 draft)
+title Restaurant Rush: class diagram (v4 draft)
 
 package "Boundary" #F4F4F4 {
   class ConsoleUI {
@@ -108,7 +108,7 @@ package "Entity" #F4F4F4 {
   }
 
   class Table {
-    - id : int
+    - number : int
     - occupant : Customer
     + isFree() : boolean
     + seat(c : Customer) : void
@@ -116,20 +116,30 @@ package "Entity" #F4F4F4 {
   }
 
   abstract class Customer {
+    + {static} MAX_SATISFACTION : int = 100
     - id : int
     - satisfaction : int
     - status : CustomerStatus
     - servedTurn : int
     - readyToPayTurn : int
     + {abstract} waitingPenalty() : int
+    + {abstract} typeName() : String
     + discountPercent() : int
     + chooseFood(menu : Menu) : Orderable
     + onServed(o : Order, turn : int) : void
-    + loseSatisfaction(points : int) : void
+    + seat() : void
+    + placeOrder(o : Order) : void
+    + receiveDish(turn : int) : void
+    + finishEatingIfDone(turn : int) : boolean
+    + canPay(turn : int) : boolean
+    + pay() : void
+    + applyWaitingLoss() : boolean
+    # adjustSatisfaction(change : int) : void
   }
 
   class RegularCustomer {
     + waitingPenalty() : int
+    + typeName() : String
   }
 
   class VIPCustomer <<Stage 2>> #E8F0FE {
@@ -143,16 +153,21 @@ package "Entity" #F4F4F4 {
   }
 
   class Order {
-    - unitsDone : int
+    - item : Orderable
     - billCents : int
+    - unitsDone : int
     - status : OrderStatus
+    + Order(item : Orderable, billCents : int)
     + advance() : void
+    + serve() : void
+    + markPaid() : void
+    + cancel() : void
     + isReady() : boolean
-    + lockBill(cents : int) : void
+    + getUnitsTotal() : int
   }
 
   interface Orderable {
-    + name() : String
+    + displayName() : String
     + priceCents() : int
     + prepUnits() : int
   }
@@ -161,6 +176,7 @@ package "Entity" #F4F4F4 {
     SALAD
     BURGER
     PASTA
+    - displayName : String
     - priceCents : int
     - prepUnits : int
   }
@@ -295,8 +311,8 @@ end note
 
 note left of Order
   <b>Encapsulation</b>: status changes only
-  through advance() and lockBill(); the bill
-  is locked when the order is taken.
+  through advance(), serve(), markPaid() and
+  cancel(); the bill is locked in the constructor.
 end note
 
 legend right
