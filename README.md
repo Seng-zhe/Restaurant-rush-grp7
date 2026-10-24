@@ -2,9 +2,9 @@
 
 A turn-based restaurant management game played on the command line. The player is the manager and decides which customers and orders the Waiter and Chef handle each turn.
 
-**Repository:** https://github.com/<owner>/restaurant-rush
-**Group:** <LAB group>, Group <number>
-**Members:** <Member A> (turn engine), <Member B> (extensions), Goh Seng Zhe (design and integration)
+**Repository:** https://github.com/Seng-zhe/restaurant-rush
+**Group:** CT2003 , Group 7
+**Members:** LY(turn engine), Ryan (extensions), Goh Seng Zhe (design and integration)
 
 ## Requirements
 
@@ -66,7 +66,7 @@ To run a stage: `git checkout stage-1`, then build and run as above.
 
 ### Stage 1 → Stage 2
 
-Compare link: https://github.com/<owner>/restaurant-rush/compare/stage-1...stage-2
+Compare link: https://github.com/Seng-zhe/restaurant-rush/compare/stage-1...stage-2
 
 **New files**
 
@@ -83,7 +83,7 @@ Compare link: https://github.com/<owner>/restaurant-rush/compare/stage-1...stage
 
 ### Stage 2 → Stage 3
 
-Compare link: https://github.com/<owner>/restaurant-rush/compare/stage-2...stage-3
+Compare link: https://github.com/Seng-zhe/restaurant-rush/compare/stage-2...stage-3
 
 **New files**
 
