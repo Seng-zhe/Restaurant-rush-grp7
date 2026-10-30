@@ -150,6 +150,7 @@ public class ConsoleUI {
         }
         out.println("Staff: Waiter 1 task | Chef 1 preparation unit | Cashier automatic");
         out.println(THIN);
+        showMenu(new restaurantrush.entity.Menu());
     }
 
     private void showTurnEnd(GameSnapshot s) {
@@ -198,7 +199,17 @@ public class ConsoleUI {
     static String money(int cents) {
         return String.format("$%d.%02d", cents / 100, cents % 100);
     }
-
+    private void showMenu(restaurantrush.entity.Menu menu) {
+        out.println("Available Menu Items:");
+        for (restaurantrush.entity.Orderable item : menu.items()) {
+            out.printf("  - %-7s : %5s (%d turns)%n", 
+                item.displayName(), 
+                money(item.priceCents()), 
+                item.prepUnits()
+            );
+        }
+        out.println(THIN);
+    }
     private static String average(OptionalDouble value) {
         return value.isPresent() ? String.format("%.1f", value.getAsDouble()) : "N/A";
     }
