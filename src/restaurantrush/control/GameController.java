@@ -17,11 +17,14 @@ public class GameController {
     /** Last turn of the base setting. */
     public static final int MAX_TURNS = 18;
 
-    private int turn;
+    private int turn = 0;
+
+// Tracks whether a turn is currently active
+private boolean turnActive = false;
+
 // Temporary action tracking until StaffMember is implemented
 private boolean waiterUsedThisTurn = false;
 private boolean chefUsedThisTurn = false;
-
     /**
      * Step 1: advances to the next turn and adds the scheduled arrival.
      *
@@ -31,37 +34,27 @@ private boolean chefUsedThisTurn = false;
 
     List<String> events = new ArrayList<>();
 
+    // Cannot start another turn while one is running
     if (turnActive) {
         events.add("Current turn has not ended yet.");
         return events;
     }
 
+    // Cannot exceed the maximum number of turns
     if (isGameOver()) {
         events.add("Game is over. No more turns allowed.");
         return events;
     }
 
+    // Start the new turn
     turn++;
     turnActive = true;
 
+    // Reset staff availability
     waiterUsedThisTurn = false;
     chefUsedThisTurn = false;
 
-    // Temporary arrival logic
-    if (turn % 3 == 1 && turn <= 16) {
-        events.add("Customer C" + (turn / 3 + 1)
-                + " (Regular) arrives.");
-    }
-
-    return events;
-}
-
-    // Advance to the next turn
-    turn++;
-waiterUsedThisTurn = false;
-chefUsedThisTurn = false;
-
-    // Temporary arrival logic until ArrivalSchedule exists
+    // Temporary customer arrival logic
     if (turn % 3 == 1 && turn <= 16) {
         events.add("Customer C" + (turn / 3 + 1)
                 + " (Regular) arrives.");
