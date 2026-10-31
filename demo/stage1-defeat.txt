@@ -1,0 +1,56 @@
+# Stage 1 defeat run: the manager chooses Wait for every staff task.
+# Nobody is served, C1 and C2 leave unhappy, revenue stays $0.00 -> Defeat.
+# Turn 1
+0
+0
+# Turn 2
+0
+0
+# Turn 3
+0
+0
+# Turn 4
+0
+0
+# Turn 5
+0
+0
+# Turn 6
+0
+0
+# Turn 7
+0
+0
+# Turn 8
+0
+0
+# Turn 9
+0
+0
+# Turn 10
+0
+0
+# Turn 11
+0
+0
+# Turn 12
+0
+0
+# Turn 13
+0
+0
+# Turn 14
+0
+0
+# Turn 15
+0
+0
+# Turn 16
+0
+0
+# Turn 17
+0
+0
+# Turn 18
+0
+0

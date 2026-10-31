@@ -9,6 +9,7 @@ import restaurantrush.control.CustomerView;
 import restaurantrush.control.GameController;
 import restaurantrush.control.GameSnapshot;
 import restaurantrush.control.TableView;
+import restaurantrush.entity.Restaurant;
 
 /**
  * The command-line interface: shows the game state and collects the
@@ -24,9 +25,9 @@ public class ConsoleUI {
     private static final String LINE = "=".repeat(60);
     private static final String THIN = "-".repeat(60);
 
-    private static final int VICTORY_PAID = 4;
-    private static final int VICTORY_REVENUE_CENTS = 4500;
-    private static final int VICTORY_SATISFACTION = 60;
+    private static final int VICTORY_PAID = Restaurant.TARGET_PAID;
+    private static final int VICTORY_REVENUE_CENTS = Restaurant.TARGET_REVENUE_CENTS;
+    private static final int VICTORY_SATISFACTION = Restaurant.TARGET_SATISFACTION;
 
     private final GameController controller;
     private final InputReader input;
@@ -149,6 +150,7 @@ public class ConsoleUI {
         }
         out.println("Staff: Waiter 1 task | Chef 1 preparation unit | Cashier automatic");
         out.println(THIN);
+        showMenu(new restaurantrush.entity.Menu());
     }
 
     private void showTurnEnd(GameSnapshot s) {
@@ -197,7 +199,17 @@ public class ConsoleUI {
     static String money(int cents) {
         return String.format("$%d.%02d", cents / 100, cents % 100);
     }
-
+    private void showMenu(restaurantrush.entity.Menu menu) {
+        out.println("Available Menu Items:");
+        for (restaurantrush.entity.Orderable item : menu.items()) {
+            out.printf("  - %-7s : %5s (%d turns)%n", 
+                item.displayName(), 
+                money(item.priceCents()), 
+                item.prepUnits()
+            );
+        }
+        out.println(THIN);
+    }
     private static String average(OptionalDouble value) {
         return value.isPresent() ? String.format("%.1f", value.getAsDouble()) : "N/A";
     }

@@ -2,22 +2,30 @@ package restaurantrush.control;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.OptionalDouble;
+import restaurantrush.entity.Customer;
+import restaurantrush.entity.Order;
+import restaurantrush.entity.Restaurant;
+import restaurantrush.entity.Table;
 
 /**
  * Runs the six steps of each turn and applies all game rules.
  *
- * <p><b>STUB.</b> This version only returns sample data so the console UI can
- * be built and tested before the real rules exist. The public method
- * signatures are the agreed contract between the UI and the game logic:
- * Member A replaces the method bodies, keeping the signatures.</p>
+ * <p>Built so far: arrivals (step 1), the state snapshot, and the end-of-turn
+ * satisfaction loss and departures (step 5). Still stubbed: the Waiter and
+ * Chef actions (steps 2 and 3), eating and payment (step 4). The public
+ * method signatures are the contract with {@code ConsoleUI}; keep them.</p>
  */
 public class GameController {
 
     /** Last turn of the base setting. */
     public static final int MAX_TURNS = 18;
 
-    private int turn = 0;
+    /** Number of tables in the base setting. */
+    public static final int TABLE_COUNT = 2;
+
+    private final Restaurant restaurant = new Restaurant(TABLE_COUNT);
+    private final ArrivalSchedule arrivals = new ArrivalSchedule();
+    private int turn;
 
 // Tracks whether a turn is currently active
 private boolean turnActive = false;
@@ -26,9 +34,10 @@ private boolean turnActive = false;
 private boolean waiterUsedThisTurn = false;
 private boolean chefUsedThisTurn = false;
     /**
-     * Step 1: advances to the next turn and adds the scheduled arrival.
+     * Step 1: advances to the next turn and adds the scheduled arrival to the
+     * waiting queue.
      *
-     * @return messages describing what happened, e.g. arrivals
+     * @return messages describing what happened
      */
     public List<String> startTurn() {
 
@@ -69,13 +78,19 @@ private boolean chefUsedThisTurn = false;
      * @return a read-only snapshot of the game
      */
     public GameSnapshot snapshot() {
-        // Sample data only, so the UI has something to draw.
-        CustomerView waiting = CustomerView.withoutOrder(2, "Regular", 100, "WAITING");
-        CustomerView seated = new CustomerView(1, "Regular", 84, "ORDERED",
-                "Pasta", 1, 2, "IN_PREPARATION");
-        return new GameSnapshot(turn, MAX_TURNS, 1800, OptionalDouble.of(76.0),
-                1, 1, 0, List.of(waiting),
-                List.of(new TableView(1, seated), new TableView(2, null)));
+        List<CustomerView> queueViews = new ArrayList<>();
+        for (Customer c : restaurant.getQueue()) {
+            queueViews.add(view(c));
+        }
+        List<TableView> tableViews = new ArrayList<>();
+        for (Table t : restaurant.getTables()) {
+            tableViews.add(new TableView(t.getNumber(),
+                    t.isFree() ? null : view(t.getOccupant())));
+        }
+        return new GameSnapshot(turn, MAX_TURNS, restaurant.getRevenueCents(),
+                restaurant.averageSatisfaction(), restaurant.getPaidCount(),
+                restaurant.getServedCount(), restaurant.getDepartures(),
+                queueViews, tableViews);
     }
 
     /**
@@ -228,7 +243,8 @@ private boolean chefUsedThisTurn = false;
 }
 
     /**
-     * Steps 4 and 5: eating, payment, satisfaction loss and departures.
+     * Steps 4 and 5: eating and payment (not built yet), then satisfaction
+     * loss for everyone still waiting for service, and unhappy departures.
      *
      * @return messages describing what happened this turn
      */
@@ -259,13 +275,25 @@ private boolean chefUsedThisTurn = false;
      * @return {@code true} if the player has won
      */
     public boolean isVictory() {
-        return false;
+        return restaurant.isVictory();
     }
 
-    private ActionResult stubAction(String message, int customerId) {
-        if (customerId < 1) {
-            return ActionResult.failure("There is no customer C" + customerId + ".");
+    private static CustomerView view(Customer c) {
+        Order o = c.getOrder();
+        if (o == null) {
+            return CustomerView.withoutOrder(c.getId(), c.typeName(),
+                    c.getSatisfaction(), c.getStatus().name());
         }
-        return ActionResult.success("(stub) " + message);
+        return new CustomerView(c.getId(), c.typeName(), c.getSatisfaction(),
+                c.getStatus().name(), o.getItem().displayName(), o.getUnitsDone(),
+                o.getUnitsTotal(), o.getStatus().name());
+    }
+
+    private static String label(Customer c) {
+        return "C" + c.getId() + " (" + c.typeName() + ")";
+    }
+
+    private static ActionResult notBuiltYet() {
+        return ActionResult.failure("This action is not built yet. Choose 0 (Wait).");
     }
 }
