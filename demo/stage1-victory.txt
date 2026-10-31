@@ -1,0 +1,83 @@
+# Stage 1 victory run: the Waiter seats, takes orders and serves in arrival
+# order and the Chef cooks each dish as soon as it is ordered.
+# C1-C5 pay $63.00 in total with average satisfaction 74.4 -> Victory.
+# Each turn: Waiter choice (and customer number), then Chef choice.
+# Turn 1: Seat C1; Chef idle
+1
+1
+0
+# Turn 2: Take C1's order (Pasta); Chef 1/2
+2
+1
+1
+1
+# Turn 3: Nothing to serve yet; Chef finishes Pasta
+0
+1
+1
+# Turn 4: C2 arrives; serve C1
+3
+1
+0
+# Turn 5: Seat C2
+1
+2
+0
+# Turn 6: Take C2's order (Salad); Chef makes it. Cashier charges C1
+2
+2
+1
+2
+# Turn 7: C3 arrives; serve C2
+3
+2
+0
+# Turn 8: Seat C3
+1
+3
+0
+# Turn 9: Take C3's order (Salad); Chef makes it. Cashier charges C2
+2
+3
+1
+3
+# Turn 10: C4 arrives; serve C3
+3
+3
+0
+# Turn 11: Seat C4
+1
+4
+0
+# Turn 12: Take C4's order (Pasta); Chef 1/2. Cashier charges C3
+2
+4
+1
+4
+# Turn 13: C5 arrives; seat C5; Chef finishes Pasta
+1
+5
+1
+4
+# Turn 14: Serve C4
+3
+4
+0
+# Turn 15: Take C5's order (Salad); Chef makes it
+2
+5
+1
+5
+# Turn 16: C6 arrives; serve C5. Cashier charges C4
+3
+5
+0
+# Turn 17: Seat C6
+1
+6
+0
+# Turn 18: Take C6's order (Burger); Chef makes it. Cashier charges C5
+2
+6
+1
+6

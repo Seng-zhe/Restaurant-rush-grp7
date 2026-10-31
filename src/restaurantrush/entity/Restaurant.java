@@ -26,6 +26,7 @@ public class Restaurant {
     /** Victory target: minimum average satisfaction of paid customers. */
     public static final int TARGET_SATISFACTION = 60;
 
+    private final Menu menu = new Menu();
     private final List<Table> tables = new ArrayList<>();
     private final Deque<Customer> queue = new ArrayDeque<>();
     private final List<Customer> paidCustomers = new ArrayList<>();
@@ -162,6 +163,15 @@ public class Restaurant {
         return paidCustomers.size() >= TARGET_PAID
                 && revenueCents >= TARGET_REVENUE_CENTS
                 && averageSatisfaction().orElse(0) >= TARGET_SATISFACTION;
+    }
+
+    /**
+     * Returns the menu customers order from.
+     *
+     * @return the menu
+     */
+    public Menu getMenu() {
+        return menu;
     }
 
     /**

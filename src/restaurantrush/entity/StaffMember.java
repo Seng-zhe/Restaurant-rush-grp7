@@ -1,17 +1,36 @@
 package restaurantrush.entity;
 
+/**
+ * A member of staff who can do one task per turn.
+ *
+ * <p>Each subclass calls {@link #markUsed()} after a successful task, and the
+ * controller calls {@link #resetForTurn()} at the start of every turn.</p>
+ */
 public abstract class StaffMember {
-    protected boolean usedThisTurn;
 
-    public StaffMember() {
-        this.usedThisTurn = false;
-    }
+    private boolean usedThisTurn;
 
+    /**
+     * Tells whether this staff member has already done their task this turn.
+     *
+     * @return {@code true} if the task is used up
+     */
     public boolean hasActed() {
-        return this.usedThisTurn;
+        return usedThisTurn;
     }
 
+    /** Makes the staff member available again for a new turn. */
     public void resetForTurn() {
-        this.usedThisTurn = false;
+        usedThisTurn = false;
+    }
+
+    /** Uses up this turn's task without doing anything (the "Wait" choice). */
+    public void skipTurn() {
+        markUsed();
+    }
+
+    /** Records that this turn's task has been used. */
+    protected void markUsed() {
+        usedThisTurn = true;
     }
 }

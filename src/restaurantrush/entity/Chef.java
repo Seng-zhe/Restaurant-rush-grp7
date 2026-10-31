@@ -2,27 +2,30 @@ package restaurantrush.entity;
 
 import restaurantrush.control.ActionResult;
 
+/**
+ * The Chef: each turn, does one preparation unit of one order.
+ */
 public class Chef extends StaffMember {
 
-    public Chef() {
-        super();
-    }
-
-    // Stage 1 Action: Cook an order to advance its preparation units
-    public ActionResult prepare(Order order) {
+    /**
+     * Advances an order by one preparation unit.
+     *
+     * @param customerId number of the customer who placed the order
+     * @param order      the order to work on, or {@code null} if none was taken
+     * @return the outcome; refused if the order is not in preparation
+     */
+    public ActionResult prepare(int customerId, Order order) {
         if (hasActed()) {
-            return new ActionResult(false, "Chef has already performed an action this turn.");
+            return ActionResult.failure("The Chef has already acted this turn.");
         }
-        if (order.getStatus() != OrderStatus.IN_PREPARATION) {
-            return new ActionResult(false, "Order is not currently in preparation state.");
+        if (order == null || order.getStatus() != OrderStatus.IN_PREPARATION) {
+            return ActionResult.failure("C" + customerId + " has no order in preparation.");
         }
-
-        // Call your teammate's verified advance method from Order.java
-        order.advance(); 
-        
-        // Mark that this staff member has used their single action for this turn
-        this.usedThisTurn = true;
-
-        return new ActionResult(true, "Advanced preparation units for the order successfully.");
+        order.advance();
+        markUsed();
+        String progress = order.getUnitsDone() + "/" + order.getUnitsTotal();
+        return ActionResult.success("Chef prepares C" + customerId + "'s "
+                + order.getItem().displayName() + " (" + progress + ")"
+                + (order.isReady() ? ", now READY." : "."));
     }
 }

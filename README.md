@@ -101,7 +101,11 @@ Compare link: https://github.com/Seng-zhe/Restaurant-rush-grp7/compare/stage-2..
 
 ## Documented rules
 
-- **Customer food choice:** <describe the deterministic rule or seed>
+- **Customer food choice:** when the Waiter takes an order, the customer picks a dish with `java.util.Random` seeded with `42` (`OrderGenerator.SEED`). Every run is identical: the orders taken are Pasta, Salad, Salad, Pasta, Salad, Burger, in the order they are taken.
+- **Turn sequence:** 1. the scheduled customer arrives (turns 1, 4, 7, 10, 13, 16). 2. Waiter: seat, take order, serve, or wait. 3. Chef: one preparation unit, or wait. 4. The Cashier charges one customer who became ready to pay on an earlier turn, then customers served on an earlier turn finish eating. 5. Customers who are WAITING, SEATED or ORDERED lose satisfaction (Regular: 8); at 0 they leave without paying. 6. After turn 18, victory needs 4+ paid customers, $45.00+ revenue and average satisfaction 60+.
+- **Timing:** a dish served on turn *t* is eaten during turn *t*+1 and paid for at the end of turn *t*+2. Satisfaction is recorded when the customer pays.
+- **Cashier:** works automatically but, like all staff, does one task per turn. If two customers can pay in the same turn, the one at the lower-numbered table pays first.
+- **Refused choices:** an invalid choice (wrong customer, no free table, dish not READY) is explained and the manager chooses again; the staff task is not used up.
 - **Critic special behaviour:** <describe>
 - **Combo choice rule:** <describe>
 - **Rounding:** money is stored in integer cents; percentages round half up to the nearest cent.

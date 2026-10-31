@@ -120,6 +120,7 @@ package "Entity" #F4F4F4 {
     + tableOf(c : Customer) : Optional<Table>
     + averageSatisfaction() : OptionalDouble
     + isVictory() : boolean
+    + getMenu() : Menu
   }
 
   class Table {
@@ -207,6 +208,15 @@ package "Entity" #F4F4F4 {
     + items() : List<Orderable>
   }
 
+  class OrderGenerator <<utility>> {
+    + {static} SEED : long = 42
+    + {static} chooseDish(menu : Menu) : Orderable
+  }
+
+  class Money <<utility>> {
+    + {static} format(cents : int) : String
+  }
+
   class HappyHour <<Stage 3>> #FDEBD0 {
     - turnsLeft : int
     - used : boolean
@@ -219,18 +229,20 @@ package "Entity" #F4F4F4 {
     - usedThisTurn : boolean
     + resetForTurn() : void
     + hasActed() : boolean
+    + skipTurn() : void
+    # markUsed() : void
   }
 
   class Waiter {
-    + seat(c : Customer, t : Table) : ActionResult
-    + takeOrder(c : Customer, menu : Menu, price : int) : ActionResult
-    + serve(o : Order, turn : int) : ActionResult
+    + seat(r : Restaurant, c : Customer, t : Table) : ActionResult
+    + takeOrder(c : Customer, menu : Menu) : ActionResult
+    + serve(c : Customer, turn : int) : ActionResult
   }
   class Chef {
-    + prepare(o : Order) : ActionResult
+    + prepare(customerId : int, o : Order) : ActionResult
   }
   class Cashier {
-    + collectPayment(r : Restaurant, turn : int) : void
+    + collectPayment(r : Restaurant, turn : int) : Optional<Customer>
   }
   class Host <<Stage 3>> #FDEBD0 {
     + seat(c : Customer, t : Table) : ActionResult
@@ -284,6 +296,7 @@ Customer --> CustomerStatus
 Order --> "1" Orderable : item
 Order --> OrderStatus
 Menu o-- "3..*" Orderable
+Customer ..> OrderGenerator : chooseFood() uses
 
 Orderable <|.. MenuItem
 Orderable <|.. ComboMeal

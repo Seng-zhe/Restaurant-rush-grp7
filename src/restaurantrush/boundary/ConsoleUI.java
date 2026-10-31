@@ -9,6 +9,7 @@ import restaurantrush.control.CustomerView;
 import restaurantrush.control.GameController;
 import restaurantrush.control.GameSnapshot;
 import restaurantrush.control.TableView;
+import restaurantrush.entity.Money;
 import restaurantrush.entity.Restaurant;
 
 /**
@@ -197,7 +198,7 @@ public class ConsoleUI {
      * @return the formatted amount
      */
     static String money(int cents) {
-        return String.format("$%d.%02d", cents / 100, cents % 100);
+        return Money.format(cents);
     }
     private void showMenu(restaurantrush.entity.Menu menu) {
         out.println("Available Menu Items:");

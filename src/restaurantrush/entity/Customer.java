@@ -48,6 +48,18 @@ public abstract class Customer {
     public abstract String typeName();
 
     /**
+     * Chooses a dish from the menu when the Waiter takes the order. The base
+     * rule is a seeded random pick (see {@link OrderGenerator}), so every run
+     * of the game is the same; later customer types may override this.
+     *
+     * @param menu the menu to choose from
+     * @return the chosen dish
+     */
+    public Orderable chooseFood(Menu menu) {
+        return OrderGenerator.chooseDish(menu);
+    }
+
+    /**
      * Seats this customer.
      *
      * @throws IllegalStateException if the customer is not waiting

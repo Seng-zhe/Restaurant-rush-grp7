@@ -2,18 +2,32 @@ package restaurantrush.control;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import restaurantrush.entity.Cashier;
+import restaurantrush.entity.Chef;
 import restaurantrush.entity.Customer;
+import restaurantrush.entity.Money;
 import restaurantrush.entity.Order;
 import restaurantrush.entity.Restaurant;
+import restaurantrush.entity.StaffMember;
 import restaurantrush.entity.Table;
+import restaurantrush.entity.Waiter;
 
 /**
  * Runs the six steps of each turn and applies all game rules.
  *
- * <p>Built so far: arrivals (step 1), the state snapshot, and the end-of-turn
- * satisfaction loss and departures (step 5). Still stubbed: the Waiter and
- * Chef actions (steps 2 and 3), eating and payment (step 4). The public
- * method signatures are the contract with {@code ConsoleUI}; keep them.</p>
+ * <ol>
+ *   <li>{@link #startTurn()}: the scheduled customer arrives.</li>
+ *   <li>Waiter task: seat, take an order, serve, or wait.</li>
+ *   <li>Chef task: one preparation unit, or wait.</li>
+ *   <li>{@link #endTurn()}: customers finish eating; the Cashier charges one
+ *       customer who is ready to pay.</li>
+ *   <li>{@link #endTurn()}: customers still waiting for service lose
+ *       satisfaction; anyone at 0 leaves.</li>
+ *   <li>{@link #isVictory()}: after the last turn, the targets are checked.</li>
+ * </ol>
+ *
+ * <p>The public method signatures are the contract with {@code ConsoleUI}.</p>
  */
 public class GameController {
 
@@ -25,52 +39,38 @@ public class GameController {
 
     private final Restaurant restaurant = new Restaurant(TABLE_COUNT);
     private final ArrivalSchedule arrivals = new ArrivalSchedule();
+    private final Waiter waiter = new Waiter();
+    private final Chef chef = new Chef();
+    private final Cashier cashier = new Cashier();
+    private final List<StaffMember> staff = List.of(waiter, chef, cashier);
     private int turn;
+    private boolean turnActive;
 
-// Tracks whether a turn is currently active
-private boolean turnActive = false;
-
-// Temporary action tracking until StaffMember is implemented
-private boolean waiterUsedThisTurn = false;
-private boolean chefUsedThisTurn = false;
     /**
-     * Step 1: advances to the next turn and adds the scheduled arrival to the
-     * waiting queue.
+     * Step 1: advances to the next turn, makes every staff member available
+     * again and adds the scheduled arrival to the waiting queue.
      *
      * @return messages describing what happened
      */
     public List<String> startTurn() {
-
-    List<String> events = new ArrayList<>();
-
-    // Cannot start another turn while one is running
-    if (turnActive) {
-        events.add("Current turn has not ended yet.");
+        List<String> events = new ArrayList<>();
+        if (turnActive) {
+            events.add("The current turn has not ended yet.");
+            return events;
+        }
+        if (isGameOver()) {
+            events.add("The game is over. No more turns can be played.");
+            return events;
+        }
+        turn++;
+        turnActive = true;
+        staff.forEach(StaffMember::resetForTurn);
+        arrivals.customerArrivingOn(turn).ifPresent(c -> {
+            restaurant.addArrival(c);
+            events.add(label(c) + " arrives and joins the waiting queue.");
+        });
         return events;
     }
-
-    // Cannot exceed the maximum number of turns
-    if (isGameOver()) {
-        events.add("Game is over. No more turns allowed.");
-        return events;
-    }
-
-    // Start the new turn
-    turn++;
-    turnActive = true;
-
-    // Reset staff availability
-    waiterUsedThisTurn = false;
-    chefUsedThisTurn = false;
-
-    // Temporary customer arrival logic
-    if (turn % 3 == 1 && turn <= 16) {
-        events.add("Customer C" + (turn / 3 + 1)
-                + " (Regular) arrives.");
-    }
-
-    return events;
-}
 
     /**
      * Returns the current state for display.
@@ -94,33 +94,26 @@ private boolean chefUsedThisTurn = false;
     }
 
     /**
-     * Waiter task: seats a waiting customer at a free table.
+     * Waiter task: seats a waiting customer at the first free table.
      *
      * @param customerId number of the customer to seat
      * @return the outcome; refused if the customer is not waiting or no table is free
      */
     public ActionResult waiterSeat(int customerId) {
-
-    if (!turnActive) {
-    return ActionResult.failure("No active turn is available.");
-}
-
-    if (waiterUsedThisTurn) {
-        return ActionResult.failure(
-            "Waiter has already acted this turn."
-        );
+        Optional<ActionResult> refused = checkTurn(waiter, "Waiter");
+        if (refused.isPresent()) {
+            return refused.get();
+        }
+        Optional<Customer> customer = restaurant.findPresentCustomer(customerId);
+        if (customer.isEmpty()) {
+            return notHere(customerId);
+        }
+        Optional<Table> table = restaurant.freeTable();
+        if (table.isEmpty()) {
+            return ActionResult.failure("No table is free.");
+        }
+        return waiter.seat(restaurant, customer.get(), table.get());
     }
-
-    ActionResult result = stubAction(
-        "Waiter seats C" + customerId + ".", customerId
-    );
-
-    if (result.ok()) {
-        waiterUsedThisTurn = true;
-    }
-
-    return result;
-}
 
     /**
      * Waiter task: takes a seated customer's order. The customer chooses the dish.
@@ -129,25 +122,16 @@ private boolean chefUsedThisTurn = false;
      * @return the outcome, including the dish chosen and its price
      */
     public ActionResult waiterTakeOrder(int customerId) {
-
-    if (!turnActive) {
-    return ActionResult.failure("No active turn is available.");
-}
-
-    if (waiterUsedThisTurn) {
-        return ActionResult.failure("Waiter has already acted this turn.");
+        Optional<ActionResult> refused = checkTurn(waiter, "Waiter");
+        if (refused.isPresent()) {
+            return refused.get();
+        }
+        Optional<Customer> customer = restaurant.findPresentCustomer(customerId);
+        if (customer.isEmpty()) {
+            return notHere(customerId);
+        }
+        return waiter.takeOrder(customer.get(), restaurant.getMenu());
     }
-
-    ActionResult result = stubAction(
-        "Waiter takes C" + customerId + "'s order.", customerId
-    );
-
-    if (result.ok()) {
-        waiterUsedThisTurn = true;
-    }
-
-    return result;
-}
 
     /**
      * Waiter task: serves a customer's order that was already READY.
@@ -155,46 +139,35 @@ private boolean chefUsedThisTurn = false;
      * @param customerId number of the customer whose order to serve
      * @return the outcome; refused if the order is not READY
      */
-   public ActionResult waiterServe(int customerId) {
-
-    if (!turnActive) {
-    return ActionResult.failure("No active turn is available.");
-}
-
-    if (waiterUsedThisTurn) {
-        return ActionResult.failure("Waiter has already acted this turn.");
+    public ActionResult waiterServe(int customerId) {
+        Optional<ActionResult> refused = checkTurn(waiter, "Waiter");
+        if (refused.isPresent()) {
+            return refused.get();
+        }
+        Optional<Customer> customer = restaurant.findPresentCustomer(customerId);
+        if (customer.isEmpty()) {
+            return notHere(customerId);
+        }
+        ActionResult result = waiter.serve(customer.get(), turn);
+        if (result.ok()) {
+            restaurant.recordServed();
+        }
+        return result;
     }
-
-    ActionResult result = stubAction(
-        "Waiter serves C" + customerId + ".", customerId
-    );
-
-    if (result.ok()) {
-        waiterUsedThisTurn = true;
-    }
-
-    return result;
-}
 
     /**
      * Waiter does nothing this turn.
      *
-     * @return always successful
+     * @return successful unless no turn is running or the Waiter already acted
      */
     public ActionResult waiterWait() {
-
-    if (!turnActive) {
-    return ActionResult.failure("No active turn is available.");
-}
-
-    if (waiterUsedThisTurn) {
-        return ActionResult.failure("Waiter has already acted this turn.");
+        Optional<ActionResult> refused = checkTurn(waiter, "Waiter");
+        return refused.orElseGet(() -> {
+            waiter.skipTurn();
+            return ActionResult.success("Waiter waits.");
+        });
     }
 
-    waiterUsedThisTurn = true;
-
-    return ActionResult.success("Waiter waits.");
-}
     /**
      * Chef task: advances a customer's order by one preparation unit.
      *
@@ -202,71 +175,74 @@ private boolean chefUsedThisTurn = false;
      * @return the outcome; refused if the order is not in preparation
      */
     public ActionResult chefWork(int customerId) {
-
-    if (!turnActive) {
-    return ActionResult.failure("No active turn is available.");
-}
-
-    if (chefUsedThisTurn) {
-        return ActionResult.failure("Chef has already acted this turn.");
+        Optional<ActionResult> refused = checkTurn(chef, "Chef");
+        if (refused.isPresent()) {
+            return refused.get();
+        }
+        Optional<Customer> customer = restaurant.findPresentCustomer(customerId);
+        if (customer.isEmpty()) {
+            return notHere(customerId);
+        }
+        return chef.prepare(customerId, customer.get().getOrder());
     }
-
-    ActionResult result = stubAction(
-        "Chef works on C" + customerId + "'s order.", customerId
-    );
-
-    if (result.ok()) {
-        chefUsedThisTurn = true;
-    }
-
-    return result;
-}
 
     /**
      * Chef does nothing this turn.
      *
-     * @return always successful
+     * @return successful unless no turn is running or the Chef already acted
      */
     public ActionResult chefWait() {
-
-    if (!turnActive) {
-    return ActionResult.failure("No active turn is available.");
-}
-
-    if (chefUsedThisTurn) {
-        return ActionResult.failure("Chef has already acted this turn.");
+        Optional<ActionResult> refused = checkTurn(chef, "Chef");
+        return refused.orElseGet(() -> {
+            chef.skipTurn();
+            return ActionResult.success("Chef waits.");
+        });
     }
-
-    chefUsedThisTurn = true;
-
-    return ActionResult.success("Chef waits.");
-}
 
     /**
-     * Steps 4 and 5: eating and payment (not built yet), then satisfaction
-     * loss for everyone still waiting for service, and unhappy departures.
+     * Steps 4 and 5: customers finish eating and the Cashier charges one
+     * customer who is ready to pay; then everyone still waiting for service
+     * loses satisfaction and anyone at 0 leaves.
      *
-     * @return messages describing what happened this turn
+     * @return messages describing what happened
      */
     public List<String> endTurn() {
+        List<String> events = new ArrayList<>();
+        if (!turnActive) {
+            events.add("No turn is running.");
+            return events;
+        }
+        turnActive = false;
 
-    if (!turnActive) {
-        return List.of("No active turn to end.");
+        // Step 4a: the Cashier charges a customer who finished eating on an earlier turn.
+        cashier.collectPayment(restaurant, turn).ifPresent(c -> events.add(
+                "Cashier charges " + label(c) + " " + Money.format(c.getOrder().getBillCents())
+                + " (satisfaction " + c.getSatisfaction() + "). Their table is free."));
+
+        // Step 4b: customers served on an earlier turn finish eating.
+        for (Customer c : restaurant.presentCustomers()) {
+            if (c.finishEatingIfDone(turn)) {
+                events.add(label(c) + " finishes eating and is ready to pay.");
+            }
+        }
+
+        // Step 5: waiting customers lose satisfaction; anyone at 0 leaves.
+        for (Customer c : restaurant.presentCustomers()) {
+            if (c.applyWaitingLoss()) {
+                restaurant.recordDeparture(c);
+                events.add(label(c) + " has run out of patience and leaves without paying.");
+            }
+        }
+        return events;
     }
-
-    turnActive = false;
-
-    // Temporary until restaurant end-turn logic is implemented
-    return List.of("(stub) End of turn " + turn + ".");
-}
 
     /**
      * Tells whether all turns have been played.
      *
-     * @return {@code true} after the last turn
+     * @return {@code true} once the last turn has ended
      */
     public boolean isGameOver() {
-        return turn >= MAX_TURNS;
+        return turn >= MAX_TURNS && !turnActive;
     }
 
     /**
@@ -276,6 +252,20 @@ private boolean chefUsedThisTurn = false;
      */
     public boolean isVictory() {
         return restaurant.isVictory();
+    }
+
+    private Optional<ActionResult> checkTurn(StaffMember member, String role) {
+        if (!turnActive) {
+            return Optional.of(ActionResult.failure("No turn is running."));
+        }
+        if (member.hasActed()) {
+            return Optional.of(ActionResult.failure("The " + role + " has already acted this turn."));
+        }
+        return Optional.empty();
+    }
+
+    private static ActionResult notHere(int customerId) {
+        return ActionResult.failure("There is no customer C" + customerId + " in the restaurant.");
     }
 
     private static CustomerView view(Customer c) {
@@ -291,9 +281,5 @@ private boolean chefUsedThisTurn = false;
 
     private static String label(Customer c) {
         return "C" + c.getId() + " (" + c.typeName() + ")";
-    }
-
-    private static ActionResult notBuiltYet() {
-        return ActionResult.failure("This action is not built yet. Choose 0 (Wait).");
     }
 }

@@ -2,64 +2,82 @@ package restaurantrush.entity;
 
 import restaurantrush.control.ActionResult;
 
+/**
+ * The Waiter: each turn, seats a customer, takes an order or serves a dish.
+ *
+ * <p>Every method checks the rules first and returns a refused
+ * {@link ActionResult} without changing anything if the task is not allowed,
+ * so a refused choice never uses up the Waiter's turn.</p>
+ */
 public class Waiter extends StaffMember {
 
-    public Waiter() {
-        super();
-    }
-
-    // Stage 1 Action: Seat a customer from the queue at a free table
-    public ActionResult seat(Customer customer, Table table) {
+    /**
+     * Seats a waiting customer at a free table.
+     *
+     * @param restaurant the restaurant whose queue the customer is in
+     * @param customer   the customer to seat
+     * @param table      the table to seat them at
+     * @return the outcome
+     */
+    public ActionResult seat(Restaurant restaurant, Customer customer, Table table) {
         if (hasActed()) {
-            return new ActionResult(false, "Waiter has already performed an action this turn.");
+            return ActionResult.failure("The Waiter has already acted this turn.");
+        }
+        if (customer.getStatus() != CustomerStatus.WAITING) {
+            return ActionResult.failure("C" + customer.getId() + " is not in the waiting queue.");
         }
         if (!table.isFree()) {
-            return new ActionResult(false, "Table is already occupied.");
+            return ActionResult.failure("Table " + table.getNumber() + " is occupied.");
         }
-        
-        table.seat(customer);
-        customer.seat(); 
-        
-        this.usedThisTurn = true;
-        return new ActionResult(true, "Customer seated successfully.");
+        restaurant.seat(customer, table);
+        markUsed();
+        return ActionResult.success("Waiter seats C" + customer.getId()
+                + " at Table " + table.getNumber() + ".");
     }
 
-    // Stage 1 Action: Take a seated customer's order using the Orderable interface
-    public ActionResult takeOrder(Customer customer, Orderable item) {
+    /**
+     * Takes a seated customer's order. The customer chooses the dish and the
+     * bill is locked at the dish's current price.
+     *
+     * @param customer the seated customer
+     * @param menu     the menu the customer chooses from
+     * @return the outcome, naming the dish and price
+     */
+    public ActionResult takeOrder(Customer customer, Menu menu) {
         if (hasActed()) {
-            return new ActionResult(false, "Waiter has already performed an action this turn.");
+            return ActionResult.failure("The Waiter has already acted this turn.");
         }
         if (customer.getStatus() != CustomerStatus.SEATED) {
-            return new ActionResult(false, "Customer is not ready to place an order.");
+            return ActionResult.failure("C" + customer.getId()
+                    + " is not seated and waiting to order.");
         }
-
-        // Initialize a new order with the item choice and lock its bill price
-        Order order = new Order(item, item.priceCents());
-        
-        // Link the order to the customer
+        Orderable dish = customer.chooseFood(menu);
+        Order order = new Order(dish, dish.priceCents());
         customer.placeOrder(order);
-
-        this.usedThisTurn = true;
-        return new ActionResult(true, "Order taken successfully for the customer.");
+        markUsed();
+        return ActionResult.success("Waiter takes C" + customer.getId() + "'s order: "
+                + dish.displayName() + " (" + Money.format(order.getBillCents()) + ").");
     }
 
-    // Stage 1 Action: Serve a ready order to the customer
-    public ActionResult serve(Customer customer) {
+    /**
+     * Serves a READY dish to its customer, who starts eating.
+     *
+     * @param customer the customer whose order to serve
+     * @param turn     the current turn
+     * @return the outcome
+     */
+    public ActionResult serve(Customer customer, int turn) {
         if (hasActed()) {
-            return new ActionResult(false, "Waiter has already performed an action this turn.");
+            return ActionResult.failure("The Waiter has already acted this turn.");
         }
-        
         Order order = customer.getOrder();
-        if (order == null || order.getStatus() != OrderStatus.READY) {
-            return new ActionResult(false, "There is no ready order to serve this customer.");
+        if (order == null || !order.isReady()) {
+            return ActionResult.failure("C" + customer.getId() + " has no READY dish to serve.");
         }
-
-        // Advance the order status to SERVED
         order.serve();
-        
-        // TODO: Update customer's eating status transition method here once verified below line 72 in Customer.java
-        
-        this.usedThisTurn = true;
-        return new ActionResult(true, "Order served successfully.");
+        customer.receiveDish(turn);
+        markUsed();
+        return ActionResult.success("Waiter serves " + order.getItem().displayName()
+                + " to C" + customer.getId() + ".");
     }
 }
