@@ -56,9 +56,35 @@ public abstract class Customer {
      * @return the chosen dish
      */
     public Orderable chooseFood(Menu menu) {
-        return OrderGenerator.chooseDish(menu);
-    }
+    	 java.util.List<Orderable> allItems = menu.items();
+         java.util.List<Orderable> combos = new java.util.ArrayList<>();
+         java.util.List<Orderable> singleItems = new java.util.ArrayList<>();
 
+         // Group items into separate structural categories
+         for (Orderable item : allItems) {
+             if (item instanceof ComboMeal) {
+                 combos.add(item);
+             } else {
+                 singleItems.add(item);
+             }
+         }
+
+         // Rule Execution: If combos exist, check a 30% chance window
+         // Note: Replace Math.random() with your assignment's standard generator if required
+         if (!combos.isEmpty() && Math.random() < 0.30) {
+             int index = (int) (Math.random() * combos.size());
+             return combos.get(index);
+         }
+
+         // Fallback or default option: Select a standard single item
+         if (singleItems.isEmpty()) {
+             return null;
+         }
+         int index = (int) (Math.random() * singleItems.size());
+         return singleItems.get(index);
+     }       
+    
+    
     /**
      * Seats this customer.
      *
@@ -197,7 +223,24 @@ public abstract class Customer {
     protected void adjustSatisfaction(int change) {
         satisfaction = Math.max(0, Math.min(MAX_SATISFACTION, satisfaction + change));
     }
+    /**
+     * Stage 3 Happy Hour rule: Recovers satisfaction points at turn start 
+     * if the customer is still waiting for service.
+     */
+    public void recoverHappyHourSatisfaction() {
+        if (this.status.isAwaitingService()) {
+            this.adjustSatisfaction(15);
+        }
+    }
 
+    /**
+     * Stage 2/3 Base Price: Returns baseline price before global policies.
+     */
+    public int calculateCustomerBasePrice(Orderable item) {
+        return item.priceCents();
+    }
+
+    
     private void requireStatus(CustomerStatus expected, String action) {
         if (status != expected) {
             throw new IllegalStateException("Cannot " + action + " C" + id

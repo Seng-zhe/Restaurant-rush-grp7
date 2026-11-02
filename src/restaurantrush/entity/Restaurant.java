@@ -33,6 +33,9 @@ public class Restaurant {
     private int revenueCents;
     private int servedCount;
     private int departures;
+    
+ // === STAGE 3 FEATURE: HAPPY HOUR INSTANCE ===
+    private final HappyHour happyHour = new HappyHour();
 
     /**
      * Creates a restaurant with empty tables.
@@ -227,4 +230,9 @@ public class Restaurant {
     public int getDepartures() {
         return departures;
     }
+ // === STAGE 3 FEATURE: HAPPY HOUR GETTER ===
+    /** Returns the global Happy Hour policy manager. */
+    public HappyHour getHappyHour() {
+        return this.happyHour;
+    }    
 }

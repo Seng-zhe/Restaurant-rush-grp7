@@ -130,7 +130,7 @@ public class GameController {
         if (customer.isEmpty()) {
             return notHere(customerId);
         }
-        return waiter.takeOrder(customer.get(), restaurant.getMenu());
+        return waiter.takeOrder(customer.get(), restaurant);
     }
 
     /**
