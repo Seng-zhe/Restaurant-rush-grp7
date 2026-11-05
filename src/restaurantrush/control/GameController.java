@@ -233,6 +233,8 @@ public class GameController {
                 events.add(label(c) + " has run out of patience and leaves without paying.");
             }
         }
+        // Stage 3: Advance Happy Hour countdown.
+restaurant.getHappyHour().tick();
         return events;
     }
 
