@@ -1,0 +1,83 @@
+# Stage 2 harsh-review run: as the victory run, but the Waiter waits on turn 8
+# instead of seating the Critic C3. C3 has waited four turns (100 - 4 x 10 = 60)
+# when served on turn 11, so writes a harsh review (60 -> 45).
+# C1-C4 pay $53.10, average satisfaction 61.3 -> still a narrow Victory
+# (one bad review pulls the average down by 6 points).
+# Each turn: Waiter choice (and customer number), then Chef choice.
+# Turn 1: Seat C1; Chef idle
+1
+1
+0
+# Turn 2: Take C1's order (Pasta); Chef 1/2
+2
+1
+1
+1
+# Turn 3: Nothing to serve yet; Chef finishes Pasta
+0
+1
+1
+# Turn 4: C2 (VIP) arrives; serve C1
+3
+1
+0
+# Turn 5: Seat C2
+1
+2
+0
+# Turn 6: Take C2's order (Salad, $8.10); Chef makes it. Cashier charges C1
+2
+2
+1
+2
+# Turn 7: C3 (Critic) arrives; serve C2
+3
+2
+0
+# Turn 8: Waiter waits (C3 left in the queue); Chef idle
+0
+0
+# Turn 9: Seat C3. Cashier charges C2
+1
+3
+0
+# Turn 10: C4 arrives; take C3's order (Salad); Chef makes it
+2
+3
+1
+3
+# Turn 11: Serve C3 (satisfaction 60: harsh review -> 45)
+3
+3
+0
+# Turn 12: Seat C4
+1
+4
+0
+# Turn 13: C5 (VIP) arrives; take C4's order (Pasta); Chef 1/2. Cashier charges C3
+2
+4
+1
+4
+# Turn 14: Seat C5; Chef finishes Pasta
+1
+5
+1
+4
+# Turn 15: Serve C4
+3
+4
+0
+# Turn 16: C6 (Critic) arrives; take C5's order (Salad, $8.10); Chef makes it
+2
+5
+1
+5
+# Turn 17: Serve C5. Cashier charges C4
+3
+5
+0
+# Turn 18: Seat C6
+1
+6
+0
