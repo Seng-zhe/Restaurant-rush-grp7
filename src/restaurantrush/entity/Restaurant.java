@@ -9,11 +9,22 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 
 /**
- * The restaurant's state: tables, the waiting queue, and the running totals.
- * Totals only change through the record... methods, so revenue can
- * never include an unpaid or abandoned order.
+ * The restaurant's state: tables, the waiting queue, and the running totals
+ * used for the end-of-game result.
+ *
+ * <p>Totals only change through the {@code record...} methods, so revenue can
+ * never include an unpaid or abandoned order.</p>
  */
 public class Restaurant {
+
+    /** Victory target: minimum number of paid customers. */
+    public static final int TARGET_PAID = 4;
+
+    /** Victory target: minimum revenue, in cents ($45.00). */
+    public static final int TARGET_REVENUE_CENTS = 4500;
+
+    /** Victory target: minimum average satisfaction of paid customers. */
+    public static final int TARGET_SATISFACTION = 60;
 
     private final Menu menu = new Menu();
     private final List<Table> tables = new ArrayList<>();
@@ -23,11 +34,9 @@ public class Restaurant {
     private int servedCount;
     private int departures;
 
-    // === STAGE 3 FEATURE: HAPPY HOUR INSTANCE ===
-    private final HappyHour happyHour = new HappyHour();
-
     /**
      * Creates a restaurant with empty tables.
+     *
      * @param tableCount number of tables (2 in the base setting)
      */
     public Restaurant(int tableCount) {
@@ -38,6 +47,7 @@ public class Restaurant {
 
     /**
      * Adds a newly arrived customer to the back of the waiting queue.
+     *
      * @param customer the customer who arrived
      */
     public void addArrival(Customer customer) {
@@ -46,22 +56,22 @@ public class Restaurant {
 
     /**
      * Moves a waiting customer from the queue to a table.
+     *
      * @param customer a customer in the queue
      * @param table    a free table
-     * @throws IllegalStateException if the customer is not in the queue or the table is occupied
+     * @throws IllegalStateException if the customer is not in the queue or
+     *                               the table is occupied
      */
     public void seat(Customer customer, Table table) {
         if (!queue.contains(customer)) {
-            throw new IllegalStateException("C" + customer.getId() + " is not in the queue");
+            throw new IllegalStateException("C" + customer.getId() + " is not in the queue.");
         }
         table.seat(customer);
         customer.seat();
         queue.remove(customer);
     }
 
-    /**
-     * Counts one dish served.
-     */
+    /** Counts one dish served. */
     public void recordServed() {
         servedCount++;
     }
@@ -69,6 +79,7 @@ public class Restaurant {
     /**
      * Records a payment: adds the bill to revenue, keeps the customer's
      * satisfaction for the average, and frees their table.
+     *
      * @param customer a customer who has just paid
      */
     public void recordPayment(Customer customer) {
@@ -80,6 +91,7 @@ public class Restaurant {
     /**
      * Records an unhappy departure: removes the customer from the queue or
      * frees their table. No revenue is added.
+     *
      * @param customer a customer who has just left
      */
     public void recordDeparture(Customer customer) {
@@ -90,6 +102,7 @@ public class Restaurant {
 
     /**
      * Finds a customer who is waiting or seated.
+     *
      * @param id customer number
      * @return the customer, or empty if nobody with that number is here
      */
@@ -100,6 +113,7 @@ public class Restaurant {
     /**
      * Returns everyone currently in the restaurant: the queue first (oldest
      * first), then seated customers in table order.
+     *
      * @return a new list of present customers
      */
     public List<Customer> presentCustomers() {
@@ -114,6 +128,7 @@ public class Restaurant {
 
     /**
      * Finds the first free table.
+     *
      * @return a free table, or empty if all are occupied
      */
     public Optional<Table> freeTable() {
@@ -122,6 +137,7 @@ public class Restaurant {
 
     /**
      * Finds the table a customer is sitting at.
+     *
      * @param customer the customer
      * @return their table, or empty if they are not seated
      */
@@ -131,6 +147,7 @@ public class Restaurant {
 
     /**
      * Returns the average satisfaction recorded when each customer paid.
+     *
      * @return the average, or empty if nobody has paid yet
      */
     public OptionalDouble averageSatisfaction() {
@@ -138,7 +155,19 @@ public class Restaurant {
     }
 
     /**
+     * Checks all three victory targets.
+     *
+     * @return {@code true} if every target is met
+     */
+    public boolean isVictory() {
+        return paidCustomers.size() >= TARGET_PAID
+                && revenueCents >= TARGET_REVENUE_CENTS
+                && averageSatisfaction().orElse(0) >= TARGET_SATISFACTION;
+    }
+
+    /**
      * Returns the menu customers order from.
+     *
      * @return the menu
      */
     public Menu getMenu() {
@@ -147,6 +176,7 @@ public class Restaurant {
 
     /**
      * Returns the waiting queue, oldest first.
+     *
      * @return a read-only view of the queue
      */
     public List<Customer> getQueue() {
@@ -155,6 +185,7 @@ public class Restaurant {
 
     /**
      * Returns the tables in number order.
+     *
      * @return a read-only list of tables
      */
     public List<Table> getTables() {
@@ -163,6 +194,7 @@ public class Restaurant {
 
     /**
      * Returns total revenue from paid customers.
+     *
      * @return revenue in cents
      */
     public int getRevenueCents() {
@@ -171,6 +203,7 @@ public class Restaurant {
 
     /**
      * Returns how many customers have paid.
+     *
      * @return paid customer count
      */
     public int getPaidCount() {
@@ -179,6 +212,7 @@ public class Restaurant {
 
     /**
      * Returns how many dishes have been served.
+     *
      * @return served count
      */
     public int getServedCount() {
@@ -187,18 +221,10 @@ public class Restaurant {
 
     /**
      * Returns how many customers left unhappy.
+     *
      * @return departure count
      */
     public int getDepartures() {
         return departures;
-    }
-
-    // === STAGE 3 FEATURE: HAPPY HOUR GETTER ===
-    /**
-     * Returns the global Happy Hour policy manager.
-     * @return the happy hour instance
-     */
-    public HappyHour getHappyHour() {
-        return this.happyHour;
     }
 }

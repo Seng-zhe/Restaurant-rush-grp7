@@ -1,6 +1,7 @@
-# Stage 1 victory run: the Waiter seats, takes orders and serves in arrival
-# order and the Chef cooks each dish as soon as it is ordered.
-# C1-C5 pay $63.00 in total with average satisfaction 74.4 -> Victory.
+# Stage 2 victory run: same choices as the Stage 1 victory run, now with the
+# Stage 2 mix C1 Regular, C2 VIP, C3 Critic, C4 Regular, C5 VIP, C6 Critic.
+# VIPs pay 10% less; C3 is served at satisfaction 70 and writes a glowing
+# review (70 -> 85). C1-C5 pay $61.20, average satisfaction 71.4 -> Victory.
 # Each turn: Waiter choice (and customer number), then Chef choice.
 # Turn 1: Seat C1; Chef idle
 1
@@ -41,7 +42,7 @@
 3
 1
 3
-# Turn 10: C4 arrives; serve C3
+# Turn 10: C4 arrives; serve C3 (Critic, satisfaction 70: glowing review -> 85)
 3
 3
 0
