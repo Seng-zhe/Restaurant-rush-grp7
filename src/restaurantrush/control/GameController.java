@@ -1,6 +1,7 @@
 package restaurantrush.control;
 
 import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Optional;
 import restaurantrush.entity.Cashier;
@@ -12,7 +13,7 @@ import restaurantrush.entity.Restaurant;
 import restaurantrush.entity.StaffMember;
 import restaurantrush.entity.Table;
 import restaurantrush.entity.Waiter;
-
+import restaurantrush.entity.VictoryChecker; 
 /**
  * Runs the six steps of each turn and applies all game rules.
  *
@@ -45,6 +46,7 @@ public class GameController {
     private final List<StaffMember> staff = List.of(waiter, chef, cashier);
     private int turn;
     private boolean turnActive;
+    private final VictoryChecker victoryChecker = new VictoryChecker();
 
     /**
      * Step 1: advances to the next turn, makes every staff member available
@@ -251,7 +253,7 @@ public class GameController {
      * @return {@code true} if the player has won
      */
     public boolean isVictory() {
-        return restaurant.isVictory();
+        return victoryChecker.check(restaurant);
     }
 
     private Optional<ActionResult> checkTurn(StaffMember member, String role) {

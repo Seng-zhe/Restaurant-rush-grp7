@@ -37,9 +37,9 @@ public class Menu {
      * 
      * @param combo The ComboMeal option to make available to customers
      */
-    //public void addComboMeal(ComboMeal combo) {
-        //if (combo != null && !items.contains(combo)) {
-            //this.items.add(combo);
-       // }
-   // }
+    public void addComboMeal(ComboMeal combo) {
+        if (combo != null && !items.contains(combo)) {
+            this.items.add(combo);
+        }
+    }
 }
