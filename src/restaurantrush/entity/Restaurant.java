@@ -17,14 +17,7 @@ import java.util.OptionalDouble;
  */
 public class Restaurant {
 
-    /** Victory target: minimum number of paid customers. */
-    public static final int TARGET_PAID = 4;
-
-    /** Victory target: minimum revenue, in cents ($45.00). */
-    public static final int TARGET_REVENUE_CENTS = 4500;
-
-    /** Victory target: minimum average satisfaction of paid customers. */
-    public static final int TARGET_SATISFACTION = 60;
+   
 
     private final Menu menu = new Menu();
     private final List<Table> tables = new ArrayList<>();
@@ -155,15 +148,7 @@ public class Restaurant {
     }
 
     /**
-     * Checks all three victory targets.
-     *
-     * @return {@code true} if every target is met
-     */
-    public boolean isVictory() {
-        return paidCustomers.size() >= TARGET_PAID
-                && revenueCents >= TARGET_REVENUE_CENTS
-                && averageSatisfaction().orElse(0) >= TARGET_SATISFACTION;
-    }
+ 
 
     /**
      * Returns the menu customers order from.
