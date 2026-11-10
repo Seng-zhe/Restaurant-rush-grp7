@@ -94,6 +94,7 @@ package "Control" #F4F4F4 {
 
   class ArrivalSchedule {
     - {static} ARRIVAL_TURNS : int[]
+    - {static} ARRIVAL_TYPES : List<IntFunction<Customer>>
     - nextId : int
     + customerArrivingOn(turn : int) : Optional<Customer>
   }
@@ -142,10 +143,11 @@ package "Entity" #F4F4F4 {
     + {abstract} typeName() : String
     + discountPercent() : int
     + chooseFood(menu : Menu) : Orderable
-    + onServed(o : Order, turn : int) : void
+    + billFor(dish : Orderable) : int
+    # onServed(o : Order, turn : int) : String
     + seat() : void
     + placeOrder(o : Order) : void
-    + receiveDish(turn : int) : void
+    + receiveDish(turn : int) : String
     + finishEatingIfDone(turn : int) : boolean
     + canPay(turn : int) : boolean
     + pay() : void
@@ -159,13 +161,20 @@ package "Entity" #F4F4F4 {
   }
 
   class VIPCustomer <<Stage 2>> #E8F0FE {
+    - {static} PENALTY : int = 12
+    - {static} DISCOUNT_PERCENT : int = 10
     + waitingPenalty() : int
     + discountPercent() : int
+    + typeName() : String
   }
 
   class CriticCustomer <<Stage 2>> #E8F0FE {
+    - {static} PENALTY : int = 10
+    + {static} GOOD_REVIEW_THRESHOLD : int = 70
+    + {static} REVIEW_SWING : int = 15
     + waitingPenalty() : int
-    + onServed(o : Order, turn : int) : void
+    + typeName() : String
+    # onServed(o : Order, turn : int) : String
   }
 
   class Order {
@@ -215,6 +224,7 @@ package "Entity" #F4F4F4 {
 
   class Money <<utility>> {
     + {static} format(cents : int) : String
+    + {static} discount(cents : int, percent : int) : int
   }
 
   class HappyHour <<Stage 3>> #FDEBD0 {
@@ -318,6 +328,11 @@ note right of Customer
   waitingPenalty(), discountPercent() and
   onServed() without checking the type.
   New customer types need no controller change.
+end note
+
+note bottom of CriticCustomer
+  <b>Critic review</b> (onServed): satisfaction
+  >= 70 when served: +15; below 70: -15.
 end note
 
 note bottom of ComboMeal

@@ -56,35 +56,35 @@ public abstract class Customer {
      * @return the chosen dish
      */
     public Orderable chooseFood(Menu menu) {
-    	 java.util.List<Orderable> allItems = menu.items();
-         java.util.List<Orderable> combos = new java.util.ArrayList<>();
-         java.util.List<Orderable> singleItems = new java.util.ArrayList<>();
+        return OrderGenerator.chooseDish(menu);
+    }
 
-         // Group items into separate structural categories
-         for (Orderable item : allItems) {
-             if (item instanceof ComboMeal) {
-                 combos.add(item);
-             } else {
-                 singleItems.add(item);
-             }
-         }
+    /**
+     * Returns the discount this customer gets on every bill. Regular and
+     * Critic customers pay full price; VIP customers override this.
+     *
+     * @return discount from 0 to 100 percent
+     */
+    public int discountPercent() {
+        return 0;
+    }
 
-         // Rule Execution: If combos exist, check a 30% chance window
-         // Note: Replace Math.random() with your assignment's standard generator if required
-         if (!combos.isEmpty() && Math.random() < 0.30) {
-             int index = (int) (Math.random() * combos.size());
-             return combos.get(index);
-         }
+    /**
+     * Works out what this customer will pay for a dish: the dish price less
+     * {@link #discountPercent()}, rounded half up to the nearest cent. The
+     * Waiter locks this amount into the order when it is taken.
+     *
+     * @param dish the dish ordered
+     * @return the bill in cents
+     */
+    public int billFor(Orderable dish, HappyHour happyHour) {
+        int finalPrice = Money.discount(dish.priceCents(), discountPercent());
+        if (happyHour.isActive()) {
+            finalPrice = happyHour.applyHappyHourDiscount(finalPrice);
+        }
+        return finalPrice;
+    }
 
-         // Fallback or default option: Select a standard single item
-         if (singleItems.isEmpty()) {
-             return null;
-         }
-         int index = (int) (Math.random() * singleItems.size());
-         return singleItems.get(index);
-     }       
-    
-    
     /**
      * Seats this customer.
      *
@@ -108,15 +108,32 @@ public abstract class Customer {
     }
 
     /**
-     * Receives the served dish and starts eating.
+     * Receives the served dish and starts eating, then reacts to it through
+     * {@link #onServed(Order, int)}.
      *
      * @param turn the turn it was served on
+     * @return the customer's reaction for the player, or an empty string if
+     *         this type of customer has none
      * @throws IllegalStateException if the customer has not ordered
      */
-    public void receiveDish(int turn) {
+    public String receiveDish(int turn) {
         requireStatus(CustomerStatus.ORDERED, "serve");
         servedTurn = turn;
         status = CustomerStatus.SERVED;
+        return onServed(order, turn);
+    }
+
+    /**
+     * Called once, just after this customer is served. Customer types with a
+     * reaction to being served (the Critic's review) override this; the base
+     * version does nothing.
+     *
+     * @param servedOrder the order just served
+     * @param turn        the turn it was served on
+     * @return a message describing the reaction, or an empty string for none
+     */
+    protected String onServed(Order servedOrder, int turn) {
+        return "";
     }
 
     /**
@@ -163,11 +180,19 @@ public abstract class Customer {
      *
      * @return {@code true} if the customer left this turn
      */
-    public boolean applyWaitingLoss() {
+    public boolean applyWaitingLoss(HappyHour happyHour) {
         if (!status.isAwaitingService()) {
             return false;
         }
-        satisfaction = Math.max(0, satisfaction - waitingPenalty());
+        
+        if (happyHour.isActive()) {
+            // Recover 15 satisfaction up to your max limit instead of losing it
+            satisfaction = Math.min(MAX_SATISFACTION, satisfaction + 15);
+        } else {
+            // Normal behavior: reduce satisfaction by the standard penalty rate
+            satisfaction = Math.max(0, satisfaction - waitingPenalty());
+        }
+        
         if (satisfaction == 0) {
             if (order != null) {
                 order.cancel();
@@ -223,24 +248,7 @@ public abstract class Customer {
     protected void adjustSatisfaction(int change) {
         satisfaction = Math.max(0, Math.min(MAX_SATISFACTION, satisfaction + change));
     }
-    /**
-     * Stage 3 Happy Hour rule: Recovers satisfaction points at turn start 
-     * if the customer is still waiting for service.
-     */
-    public void recoverHappyHourSatisfaction() {
-        if (this.status.isAwaitingService()) {
-            this.adjustSatisfaction(15);
-        }
-    }
 
-    /**
-     * Stage 2/3 Base Price: Returns baseline price before global policies.
-     */
-    public int calculateCustomerBasePrice(Orderable item) {
-        return item.priceCents();
-    }
-
-    
     private void requireStatus(CustomerStatus expected, String action) {
         if (status != expected) {
             throw new IllegalStateException("Cannot " + action + " C" + id

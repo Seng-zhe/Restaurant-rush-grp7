@@ -19,6 +19,10 @@ public class Menu {
         this.items = new ArrayList<>();
         // Automatically adds all baseline Enum items (Salad, Burger, Pasta)
         Collections.addAll(this.items, MenuItem.values());
+        // --- ADD A TEST COMBO MEAL HERE ---
+        // Creates a "Burger & Pasta Combo" using the existing baseline items
+        ComboMeal burgerPastaCombo = new ComboMeal("Burger & Pasta Combo", MenuItem.BURGER, MenuItem.PASTA);
+        this.addComboMeal(burgerPastaCombo);        
     }
 
     /**
@@ -37,9 +41,9 @@ public class Menu {
      * 
      * @param combo The ComboMeal option to make available to customers
      */
-    //public void addComboMeal(ComboMeal combo) {
-        //if (combo != null && !items.contains(combo)) {
-            //this.items.add(combo);
-       // }
-   // }
+    public void addComboMeal(ComboMeal combo) {
+        if (combo != null && !items.contains(combo)) {
+            this.items.add(combo);
+        }
+    }
 }

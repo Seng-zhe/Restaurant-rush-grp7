@@ -10,7 +10,8 @@ import restaurantrush.control.GameController;
 import restaurantrush.control.GameSnapshot;
 import restaurantrush.control.TableView;
 import restaurantrush.entity.Money;
-import restaurantrush.entity.Restaurant;
+
+import restaurantrush.entity.VictoryChecker;
 
 /**
  * The command-line interface: shows the game state and collects the
@@ -26,10 +27,10 @@ public class ConsoleUI {
     private static final String LINE = "=".repeat(60);
     private static final String THIN = "-".repeat(60);
 
-    private static final int VICTORY_PAID = Restaurant.TARGET_PAID;
-    private static final int VICTORY_REVENUE_CENTS = Restaurant.TARGET_REVENUE_CENTS;
-    private static final int VICTORY_SATISFACTION = Restaurant.TARGET_SATISFACTION;
-
+    private static final int VICTORY_PAID = VictoryChecker.TARGET_PAID;
+    private static final int VICTORY_REVENUE_CENTS = VictoryChecker.TARGET_REVENUE_CENTS;
+    private static final int VICTORY_SATISFACTION = VictoryChecker.TARGET_SATISFACTION;
+    
     private final GameController controller;
     private final InputReader input;
     private final PrintStream out;
@@ -231,14 +232,21 @@ private ActionResult hostChoice() {
     private void showMenu(restaurantrush.entity.Menu menu) {
         out.println("Available Menu Items:");
         for (restaurantrush.entity.Orderable item : menu.items()) {
-            out.printf("  - %-7s : %5s (%d turns)%n", 
-                item.displayName(), 
-                money(item.priceCents()), 
+            String prefix = " - ";
+            
+            // Check if this specific item is actually a ComboMeal
+            if (item instanceof restaurantrush.entity.ComboMeal) {
+                prefix = " [COMBO] ";
+            }
+
+            out.printf(prefix + "%-7s : %5s (%d turns)%n",
+                item.displayName(),
+                money(item.priceCents()),
                 item.prepUnits()
             );
         }
         out.println(THIN);
-    }
+    }   
     private static String average(OptionalDouble value) {
         return value.isPresent() ? String.format("%.1f", value.getAsDouble()) : "N/A";
     }

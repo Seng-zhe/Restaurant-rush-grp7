@@ -17,25 +17,17 @@ import java.util.OptionalDouble;
  */
 public class Restaurant {
 
-    /** Victory target: minimum number of paid customers. */
-    public static final int TARGET_PAID = 4;
-
-    /** Victory target: minimum revenue, in cents ($45.00). */
-    public static final int TARGET_REVENUE_CENTS = 4500;
-
-    /** Victory target: minimum average satisfaction of paid customers. */
-    public static final int TARGET_SATISFACTION = 60;
+   
 
     private final Menu menu = new Menu();
+private final HappyHour happyHour = new HappyHour();
+
     private final List<Table> tables = new ArrayList<>();
     private final Deque<Customer> queue = new ArrayDeque<>();
     private final List<Customer> paidCustomers = new ArrayList<>();
     private int revenueCents;
     private int servedCount;
     private int departures;
-    
- // === STAGE 3 FEATURE: HAPPY HOUR INSTANCE ===
-    private final HappyHour happyHour = new HappyHour();
 
     /**
      * Creates a restaurant with empty tables.
@@ -158,15 +150,7 @@ public class Restaurant {
     }
 
     /**
-     * Checks all three victory targets.
-     *
-     * @return {@code true} if every target is met
-     */
-    public boolean isVictory() {
-        return paidCustomers.size() >= TARGET_PAID
-                && revenueCents >= TARGET_REVENUE_CENTS
-                && averageSatisfaction().orElse(0) >= TARGET_SATISFACTION;
-    }
+ 
 
     /**
      * Returns the menu customers order from.
@@ -230,9 +214,10 @@ public class Restaurant {
     public int getDepartures() {
         return departures;
     }
- // === STAGE 3 FEATURE: HAPPY HOUR GETTER ===
-    /** Returns the global Happy Hour policy manager. */
-    public HappyHour getHappyHour() {
-        return this.happyHour;
-    }    
+/**
+ * Returns the restaurant's Happy Hour manager.
+ */
+public HappyHour getHappyHour() {
+    return this.happyHour;
+}
 }

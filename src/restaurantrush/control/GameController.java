@@ -1,6 +1,7 @@
 package restaurantrush.control;
 
 import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Optional;
 import restaurantrush.entity.Cashier;
@@ -13,6 +14,7 @@ import restaurantrush.entity.StaffMember;
 import restaurantrush.entity.Table;
 import restaurantrush.entity.Waiter;
 import restaurantrush.entity.Host;
+import restaurantrush.entity.VictoryChecker; 
 
 /**
  * Runs the six steps of each turn and applies all game rules.
@@ -47,6 +49,7 @@ private final Cashier cashier = new Cashier();
    private final List<StaffMember> staff = List.of(waiter, host, chef, cashier);
     private int turn;
     private boolean turnActive;
+    private final VictoryChecker victoryChecker = new VictoryChecker();
 
     /**
      * Step 1: advances to the next turn, makes every staff member available
@@ -168,7 +171,11 @@ public ActionResult hostWait() {
         if (customer.isEmpty()) {
             return notHere(customerId);
         }
-        return waiter.takeOrder(customer.get(), restaurant);
+        return waiter.takeOrder(
+    customer.get(),
+    restaurant.getMenu(),
+    restaurant.getHappyHour()
+);
     }
 
     /**
@@ -291,7 +298,7 @@ public ActionResult activateHappyHour() {
 
         // Step 5: waiting customers lose satisfaction; anyone at 0 leaves.
         for (Customer c : restaurant.presentCustomers()) {
-            if (c.applyWaitingLoss()) {
+            if (c.applyWaitingLoss(restaurant.getHappyHour())) {
                 restaurant.recordDeparture(c);
                 events.add(label(c) + " has run out of patience and leaves without paying.");
             }
@@ -316,7 +323,7 @@ restaurant.getHappyHour().tick();
      * @return {@code true} if the player has won
      */
     public boolean isVictory() {
-        return restaurant.isVictory();
+        return victoryChecker.check(restaurant);
     }
 
     private Optional<ActionResult> checkTurn(StaffMember member, String role) {
