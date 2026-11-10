@@ -14,7 +14,16 @@ public class HappyHour {
     public boolean isActive() {
         return turnsLeft > 0;
     }
+/**
+ * Returns the number of Happy Hour turns remaining.
+ */
+public int getTurnsLeft() {
+    return turnsLeft;
+}
 
+public boolean isUsed() {
+    return used;
+}
     public void tick() {
         if (turnsLeft > 0) turnsLeft--;
     }

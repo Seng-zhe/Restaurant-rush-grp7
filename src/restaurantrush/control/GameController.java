@@ -74,6 +74,10 @@ private final Cashier cashier = new Cashier();
             restaurant.addArrival(c);
             events.add(label(c) + " arrives and joins the waiting queue.");
         });
+// Recovery during the second Happy Hour turn.
+if (restaurant.getHappyHour().isActive()) {
+    recoverHappyHourSatisfaction();
+}
         return events;
     }
 
@@ -263,12 +267,19 @@ public ActionResult activateHappyHour() {
         );
     }
 
+recoverHappyHourSatisfaction();
+
     return ActionResult.success(
         "Happy Hour activated! 20% discount for 2 turns."
     );
 }
+public int getHappyHourTurnsLeft() {
+    return restaurant.getHappyHour().getTurnsLeft();
+}
 
-
+public boolean isHappyHourUsed() {
+    return restaurant.getHappyHour().isUsed();
+}
     /**
      * Steps 4 and 5: customers finish eating and the Cashier charges one
      * customer who is ready to pay; then everyone still waiting for service
@@ -325,7 +336,15 @@ restaurant.getHappyHour().tick();
     public boolean isVictory() {
         return victoryChecker.check(restaurant);
     }
-
+/**
+ * Restores 15 satisfaction to customers still waiting for a table.
+ * Called once at the beginning of each active Happy Hour turn.
+ */
+private void recoverHappyHourSatisfaction() {
+    for (Customer customer : restaurant.getQueue()) {
+        customer.recoverSatisfaction();
+    }
+}
     private Optional<ActionResult> checkTurn(StaffMember member, String role) {
         if (!turnActive) {
             return Optional.of(ActionResult.failure("No turn is running."));

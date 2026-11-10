@@ -174,34 +174,39 @@ public abstract class Customer {
         status = CustomerStatus.PAID;
     }
 
-    /**
-     * Applies the end-of-turn satisfaction loss if still waiting for service.
-     * A customer who reaches 0 leaves and any unfinished order is cancelled.
-     *
-     * @return {@code true} if the customer left this turn
-     */
-    public boolean applyWaitingLoss(HappyHour happyHour) {
-        if (!status.isAwaitingService()) {
-            return false;
-        }
-        
-        if (happyHour.isActive()) {
-            // Recover 15 satisfaction up to your max limit instead of losing it
-            satisfaction = Math.min(MAX_SATISFACTION, satisfaction + 15);
-        } else {
-            // Normal behavior: reduce satisfaction by the standard penalty rate
-            satisfaction = Math.max(0, satisfaction - waitingPenalty());
-        }
-        
-        if (satisfaction == 0) {
-            if (order != null) {
-                order.cancel();
-            }
-            status = CustomerStatus.LEFT;
-            return true;
-        }
+   /**
+ * Recovers 15 satisfaction when a customer is waiting
+ * for a table during Happy Hour.
+ */
+public void recoverSatisfaction() {
+    if (status == CustomerStatus.WAITING) {
+        satisfaction = Math.min(MAX_SATISFACTION, satisfaction + 15);
+    }
+}
+
+/**
+ * Applies the normal end-of-turn satisfaction penalty.
+ *
+ * @return true if the customer leaves
+ */
+public boolean applyWaitingLoss(HappyHour happyHour) {
+
+    if (!status.isAwaitingService()) {
         return false;
     }
+
+    satisfaction = Math.max(0, satisfaction - waitingPenalty());
+
+    if (satisfaction == 0) {
+        if (order != null) {
+            order.cancel();
+        }
+        status = CustomerStatus.LEFT;
+        return true;
+    }
+
+    return false;
+}
 
     /**
      * Returns the customer number.
