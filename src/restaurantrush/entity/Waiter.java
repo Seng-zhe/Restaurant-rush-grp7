@@ -43,7 +43,7 @@ public class Waiter extends StaffMember {
      * @param menu     the menu the customer chooses from
      * @return the outcome, naming the dish and price
      */
-    public ActionResult takeOrder(Customer customer, Menu menu) {
+    public ActionResult takeOrder(Customer customer, Menu menu, HappyHour happyHour) {
         if (hasActed()) {
             return ActionResult.failure("The Waiter has already acted this turn.");
         }
@@ -52,12 +52,15 @@ public class Waiter extends StaffMember {
                     + " is not seated and waiting to order.");
         }
         Orderable dish = customer.chooseFood(menu);
-        Order order = new Order(dish, customer.billFor(dish));
+        
+        // Pass happyHour directly into the customer's billing logic
+        Order order = new Order(dish, customer.billFor(dish, happyHour));
+        
         customer.placeOrder(order);
         markUsed();
         return ActionResult.success("Waiter takes C" + customer.getId() + "'s order: "
                 + dish.displayName() + " (" + Money.format(order.getBillCents()) + ").");
-    }
+    }   
 
     /**
      * Serves a READY dish to its customer, who starts eating.

@@ -132,7 +132,7 @@ public class GameController {
         if (customer.isEmpty()) {
             return notHere(customerId);
         }
-        return waiter.takeOrder(customer.get(), restaurant.getMenu());
+        return waiter.takeOrder(customer.get(), restaurant.getMenu(),null);
     }
 
     /**
@@ -230,7 +230,7 @@ public class GameController {
 
         // Step 5: waiting customers lose satisfaction; anyone at 0 leaves.
         for (Customer c : restaurant.presentCustomers()) {
-            if (c.applyWaitingLoss()) {
+            if (c.applyWaitingLoss(null)) {
                 restaurant.recordDeparture(c);
                 events.add(label(c) + " has run out of patience and leaves without paying.");
             }

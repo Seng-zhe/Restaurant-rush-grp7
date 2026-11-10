@@ -204,14 +204,21 @@ public class ConsoleUI {
     private void showMenu(restaurantrush.entity.Menu menu) {
         out.println("Available Menu Items:");
         for (restaurantrush.entity.Orderable item : menu.items()) {
-            out.printf("  - %-7s : %5s (%d turns)%n", 
-                item.displayName(), 
-                money(item.priceCents()), 
+            String prefix = " - ";
+            
+            // Check if this specific item is actually a ComboMeal
+            if (item instanceof restaurantrush.entity.ComboMeal) {
+                prefix = " [COMBO] ";
+            }
+
+            out.printf(prefix + "%-7s : %5s (%d turns)%n",
+                item.displayName(),
+                money(item.priceCents()),
                 item.prepUnits()
             );
         }
         out.println(THIN);
-    }
+    }   
     private static String average(OptionalDouble value) {
         return value.isPresent() ? String.format("%.1f", value.getAsDouble()) : "N/A";
     }

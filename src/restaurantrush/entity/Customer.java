@@ -77,8 +77,12 @@ public abstract class Customer {
      * @param dish the dish ordered
      * @return the bill in cents
      */
-    public int billFor(Orderable dish) {
-        return Money.discount(dish.priceCents(), discountPercent());
+    public int billFor(Orderable dish, HappyHour happyHour) {
+        int finalPrice = Money.discount(dish.priceCents(), discountPercent());
+        if (happyHour.isActive()) {
+            finalPrice = happyHour.applyHappyHourDiscount(finalPrice);
+        }
+        return finalPrice;
     }
 
     /**
@@ -176,11 +180,19 @@ public abstract class Customer {
      *
      * @return {@code true} if the customer left this turn
      */
-    public boolean applyWaitingLoss() {
+    public boolean applyWaitingLoss(HappyHour happyHour) {
         if (!status.isAwaitingService()) {
             return false;
         }
-        satisfaction = Math.max(0, satisfaction - waitingPenalty());
+        
+        if (happyHour.isActive()) {
+            // Recover 15 satisfaction up to your max limit instead of losing it
+            satisfaction = Math.min(MAX_SATISFACTION, satisfaction + 15);
+        } else {
+            // Normal behavior: reduce satisfaction by the standard penalty rate
+            satisfaction = Math.max(0, satisfaction - waitingPenalty());
+        }
+        
         if (satisfaction == 0) {
             if (order != null) {
                 order.cancel();
