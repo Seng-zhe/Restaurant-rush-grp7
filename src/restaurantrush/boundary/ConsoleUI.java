@@ -65,6 +65,17 @@ public class ConsoleUI {
         printEvents(controller.startTurn());
         GameSnapshot state = controller.snapshot();
         showTurnStart(state);
+out.println();
+out.println("HAPPY HOUR");
+out.println("  1. Activate Happy Hour (20% discount for 2 turns)");
+out.println("  0. Do not activate");
+
+int happyHourChoice = input.readInt("  Choose: ", 0, 1);
+
+if (happyHourChoice == 1) {
+    ActionResult result = controller.activateHappyHour();
+    out.println("  " + (result.ok() ? "" : "Not allowed: ") + result.message());
+}
 
         out.println();
         out.println("WAITER (one task this turn)");

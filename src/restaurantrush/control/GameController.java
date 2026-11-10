@@ -198,6 +198,31 @@ public class GameController {
             return ActionResult.success("Chef waits.");
         });
     }
+/**
+ * Activates Happy Hour for the current turn and the next turn.
+ * Can only be activated once per game.
+ *
+ * @return whether Happy Hour was successfully activated
+ */
+public ActionResult activateHappyHour() {
+
+    if (!turnActive) {
+        return ActionResult.failure(
+            "Happy Hour can only be activated during an active turn."
+        );
+    }
+
+    if (!restaurant.getHappyHour().activate()) {
+        return ActionResult.failure(
+            "Happy Hour has already been used."
+        );
+    }
+
+    return ActionResult.success(
+        "Happy Hour activated! 20% discount for 2 turns."
+    );
+}
+
 
     /**
      * Steps 4 and 5: customers finish eating and the Cashier charges one
