@@ -78,6 +78,10 @@ if (happyHourChoice == 1) {
 }
 
         out.println();
+out.println("HOST (one seating task this turn)");
+askUntilAccepted(this::hostChoice);
+
+        out.println();
         out.println("WAITER (one task this turn)");
         askUntilAccepted(this::waiterChoice);
 
@@ -102,6 +106,19 @@ if (happyHourChoice == 1) {
             }
         }
     }
+
+private ActionResult hostChoice() {
+    out.println("  1. Seat the first waiting customer");
+    out.println("  0. Wait");
+
+    int option = input.readInt("  Choose: ", 0, 1);
+
+    if (option == 1) {
+        return controller.hostSeat();
+    }
+
+    return controller.hostWait();
+}
 
     private ActionResult waiterChoice() {
         out.println("  1. Seat a waiting customer");

@@ -12,6 +12,7 @@ import restaurantrush.entity.Restaurant;
 import restaurantrush.entity.StaffMember;
 import restaurantrush.entity.Table;
 import restaurantrush.entity.Waiter;
+import restaurantrush.entity.Host;
 
 /**
  * Runs the six steps of each turn and applies all game rules.
@@ -40,9 +41,10 @@ public class GameController {
     private final Restaurant restaurant = new Restaurant(TABLE_COUNT);
     private final ArrivalSchedule arrivals = new ArrivalSchedule();
     private final Waiter waiter = new Waiter();
-    private final Chef chef = new Chef();
-    private final Cashier cashier = new Cashier();
-    private final List<StaffMember> staff = List.of(waiter, chef, cashier);
+private final Host host = new Host();
+private final Chef chef = new Chef();
+private final Cashier cashier = new Cashier();
+   private final List<StaffMember> staff = List.of(waiter, host, chef, cashier);
     private int turn;
     private boolean turnActive;
 
@@ -92,6 +94,42 @@ public class GameController {
                 restaurant.getServedCount(), restaurant.getDepartures(),
                 queueViews, tableViews);
     }
+
+/**
+ * Host task: seats the first customer in the waiting queue.
+ * The Host can perform at most one task per turn.
+ */
+public ActionResult hostSeat() {
+
+    Optional<ActionResult> refused = checkTurn(host, "Host");
+
+    if (refused.isPresent()) {
+        return refused.get();
+    }
+
+    if (restaurant.getQueue().isEmpty()) {
+        return ActionResult.failure("No customers are waiting.");
+    }
+
+    Customer customer = restaurant.getQueue().get(0);
+
+    return host.seat(customer, restaurant);
+}
+/**
+ * Host skips their task for this turn.
+ */
+public ActionResult hostWait() {
+
+    Optional<ActionResult> refused = checkTurn(host, "Host");
+
+    if (refused.isPresent()) {
+        return refused.get();
+    }
+
+    host.skipTurn();
+
+    return ActionResult.success("Host waits.");
+}
 
     /**
      * Waiter task: seats a waiting customer at the first free table.
