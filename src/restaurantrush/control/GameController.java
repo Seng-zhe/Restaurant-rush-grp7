@@ -1,35 +1,83 @@
 package restaurantrush.control;
 
 import java.util.ArrayList;
+
 import java.util.List;
-import java.util.OptionalDouble;
+import java.util.Optional;
+import restaurantrush.entity.Cashier;
+import restaurantrush.entity.Chef;
+import restaurantrush.entity.Customer;
+import restaurantrush.entity.Money;
+import restaurantrush.entity.Order;
+import restaurantrush.entity.Restaurant;
+import restaurantrush.entity.StaffMember;
+import restaurantrush.entity.Table;
+import restaurantrush.entity.Waiter;
+import restaurantrush.entity.Host;
+import restaurantrush.entity.VictoryChecker; 
 
 /**
  * Runs the six steps of each turn and applies all game rules.
  *
- * <p><b>STUB.</b> This version only returns sample data so the console UI can
- * be built and tested before the real rules exist. The public method
- * signatures are the agreed contract between the UI and the game logic:
- * Member A replaces the method bodies, keeping the signatures.</p>
+ * <ol>
+ *   <li>{@link #startTurn()}: the scheduled customer arrives.</li>
+ *   <li>Waiter task: seat, take an order, serve, or wait.</li>
+ *   <li>Chef task: one preparation unit, or wait.</li>
+ *   <li>{@link #endTurn()}: customers finish eating; the Cashier charges one
+ *       customer who is ready to pay.</li>
+ *   <li>{@link #endTurn()}: customers still waiting for service lose
+ *       satisfaction; anyone at 0 leaves.</li>
+ *   <li>{@link #isVictory()}: after the last turn, the targets are checked.</li>
+ * </ol>
+ *
+ * <p>The public method signatures are the contract with {@code ConsoleUI}.</p>
  */
 public class GameController {
 
     /** Last turn of the base setting. */
     public static final int MAX_TURNS = 18;
 
+    /** Number of tables in the base setting. */
+    public static final int TABLE_COUNT = 2;
+
+    private final Restaurant restaurant = new Restaurant(TABLE_COUNT);
+    private final ArrivalSchedule arrivals = new ArrivalSchedule();
+    private final Waiter waiter = new Waiter();
+private final Host host = new Host();
+private final Chef chef = new Chef();
+private final Cashier cashier = new Cashier();
+   private final List<StaffMember> staff = List.of(waiter, host, chef, cashier);
     private int turn;
+    private boolean turnActive;
+    private final VictoryChecker victoryChecker = new VictoryChecker();
 
     /**
-     * Step 1: advances to the next turn and adds the scheduled arrival.
+     * Step 1: advances to the next turn, makes every staff member available
+     * again and adds the scheduled arrival to the waiting queue.
      *
-     * @return messages describing what happened, e.g. arrivals
+     * @return messages describing what happened
      */
     public List<String> startTurn() {
-        turn++;
         List<String> events = new ArrayList<>();
-        if (turn % 3 == 1 && turn <= 16) {
-            events.add("Customer C" + (turn / 3 + 1) + " (Regular) arrives.");
+        if (turnActive) {
+            events.add("The current turn has not ended yet.");
+            return events;
         }
+        if (isGameOver()) {
+            events.add("The game is over. No more turns can be played.");
+            return events;
+        }
+        turn++;
+        turnActive = true;
+        staff.forEach(StaffMember::resetForTurn);
+        arrivals.customerArrivingOn(turn).ifPresent(c -> {
+            restaurant.addArrival(c);
+            events.add(label(c) + " arrives and joins the waiting queue.");
+        });
+// Recovery during the second Happy Hour turn.
+if (restaurant.getHappyHour().isActive()) {
+    recoverHappyHourSatisfaction();
+}
         return events;
     }
 
@@ -39,23 +87,77 @@ public class GameController {
      * @return a read-only snapshot of the game
      */
     public GameSnapshot snapshot() {
-        // Sample data only, so the UI has something to draw.
-        CustomerView waiting = CustomerView.withoutOrder(2, "Regular", 100, "WAITING");
-        CustomerView seated = new CustomerView(1, "Regular", 84, "ORDERED",
-                "Pasta", 1, 2, "IN_PREPARATION");
-        return new GameSnapshot(turn, MAX_TURNS, 1800, OptionalDouble.of(76.0),
-                1, 1, 0, List.of(waiting),
-                List.of(new TableView(1, seated), new TableView(2, null)));
+        List<CustomerView> queueViews = new ArrayList<>();
+        for (Customer c : restaurant.getQueue()) {
+            queueViews.add(view(c));
+        }
+        List<TableView> tableViews = new ArrayList<>();
+        for (Table t : restaurant.getTables()) {
+            tableViews.add(new TableView(t.getNumber(),
+                    t.isFree() ? null : view(t.getOccupant())));
+        }
+        return new GameSnapshot(turn, MAX_TURNS, restaurant.getRevenueCents(),
+                restaurant.averageSatisfaction(), restaurant.getPaidCount(),
+                restaurant.getServedCount(), restaurant.getDepartures(),
+                queueViews, tableViews);
     }
 
+/**
+ * Host task: seats the first customer in the waiting queue.
+ * The Host can perform at most one task per turn.
+ */
+public ActionResult hostSeat() {
+
+    Optional<ActionResult> refused = checkTurn(host, "Host");
+
+    if (refused.isPresent()) {
+        return refused.get();
+    }
+
+    if (restaurant.getQueue().isEmpty()) {
+        return ActionResult.failure("No customers are waiting.");
+    }
+
+    Customer customer = restaurant.getQueue().get(0);
+
+    return host.seat(customer, restaurant);
+}
+/**
+ * Host skips their task for this turn.
+ */
+public ActionResult hostWait() {
+
+    Optional<ActionResult> refused = checkTurn(host, "Host");
+
+    if (refused.isPresent()) {
+        return refused.get();
+    }
+
+    host.skipTurn();
+
+    return ActionResult.success("Host waits.");
+}
+
     /**
-     * Waiter task: seats a waiting customer at a free table.
+     * Waiter task: seats a waiting customer at the first free table.
      *
      * @param customerId number of the customer to seat
      * @return the outcome; refused if the customer is not waiting or no table is free
      */
     public ActionResult waiterSeat(int customerId) {
-        return stubAction("Waiter seats C" + customerId + ".", customerId);
+        Optional<ActionResult> refused = checkTurn(waiter, "Waiter");
+        if (refused.isPresent()) {
+            return refused.get();
+        }
+        Optional<Customer> customer = restaurant.findPresentCustomer(customerId);
+        if (customer.isEmpty()) {
+            return notHere(customerId);
+        }
+        Optional<Table> table = restaurant.freeTable();
+        if (table.isEmpty()) {
+            return ActionResult.failure("No table is free.");
+        }
+        return waiter.seat(restaurant, customer.get(), table.get());
     }
 
     /**
@@ -65,7 +167,19 @@ public class GameController {
      * @return the outcome, including the dish chosen and its price
      */
     public ActionResult waiterTakeOrder(int customerId) {
-        return stubAction("Waiter takes C" + customerId + "'s order.", customerId);
+        Optional<ActionResult> refused = checkTurn(waiter, "Waiter");
+        if (refused.isPresent()) {
+            return refused.get();
+        }
+        Optional<Customer> customer = restaurant.findPresentCustomer(customerId);
+        if (customer.isEmpty()) {
+            return notHere(customerId);
+        }
+        return waiter.takeOrder(
+    customer.get(),
+    restaurant.getMenu(),
+    restaurant.getHappyHour()
+);
     }
 
     /**
@@ -75,16 +189,32 @@ public class GameController {
      * @return the outcome; refused if the order is not READY
      */
     public ActionResult waiterServe(int customerId) {
-        return stubAction("Waiter serves C" + customerId + ".", customerId);
+        Optional<ActionResult> refused = checkTurn(waiter, "Waiter");
+        if (refused.isPresent()) {
+            return refused.get();
+        }
+        Optional<Customer> customer = restaurant.findPresentCustomer(customerId);
+        if (customer.isEmpty()) {
+            return notHere(customerId);
+        }
+        ActionResult result = waiter.serve(customer.get(), turn);
+        if (result.ok()) {
+            restaurant.recordServed();
+        }
+        return result;
     }
 
     /**
      * Waiter does nothing this turn.
      *
-     * @return always successful
+     * @return successful unless no turn is running or the Waiter already acted
      */
     public ActionResult waiterWait() {
-        return ActionResult.success("Waiter waits.");
+        Optional<ActionResult> refused = checkTurn(waiter, "Waiter");
+        return refused.orElseGet(() -> {
+            waiter.skipTurn();
+            return ActionResult.success("Waiter waits.");
+        });
     }
 
     /**
@@ -94,34 +224,108 @@ public class GameController {
      * @return the outcome; refused if the order is not in preparation
      */
     public ActionResult chefWork(int customerId) {
-        return stubAction("Chef works on C" + customerId + "'s order.", customerId);
+        Optional<ActionResult> refused = checkTurn(chef, "Chef");
+        if (refused.isPresent()) {
+            return refused.get();
+        }
+        Optional<Customer> customer = restaurant.findPresentCustomer(customerId);
+        if (customer.isEmpty()) {
+            return notHere(customerId);
+        }
+        return chef.prepare(customerId, customer.get().getOrder());
     }
 
     /**
      * Chef does nothing this turn.
      *
-     * @return always successful
+     * @return successful unless no turn is running or the Chef already acted
      */
     public ActionResult chefWait() {
-        return ActionResult.success("Chef waits.");
+        Optional<ActionResult> refused = checkTurn(chef, "Chef");
+        return refused.orElseGet(() -> {
+            chef.skipTurn();
+            return ActionResult.success("Chef waits.");
+        });
+    }
+/**
+ * Activates Happy Hour for the current turn and the next turn.
+ * Can only be activated once per game.
+ *
+ * @return whether Happy Hour was successfully activated
+ */
+public ActionResult activateHappyHour() {
+
+    if (!turnActive) {
+        return ActionResult.failure(
+            "Happy Hour can only be activated during an active turn."
+        );
     }
 
+    if (!restaurant.getHappyHour().activate()) {
+        return ActionResult.failure(
+            "Happy Hour has already been used."
+        );
+    }
+
+recoverHappyHourSatisfaction();
+
+    return ActionResult.success(
+        "Happy Hour activated! 20% discount for 2 turns."
+    );
+}
+public int getHappyHourTurnsLeft() {
+    return restaurant.getHappyHour().getTurnsLeft();
+}
+
+public boolean isHappyHourUsed() {
+    return restaurant.getHappyHour().isUsed();
+}
     /**
-     * Steps 4 and 5: eating, payment, satisfaction loss and departures.
+     * Steps 4 and 5: customers finish eating and the Cashier charges one
+     * customer who is ready to pay; then everyone still waiting for service
+     * loses satisfaction and anyone at 0 leaves.
      *
-     * @return messages describing what happened this turn
+     * @return messages describing what happened
      */
     public List<String> endTurn() {
-        return List.of("(stub) End of turn " + turn + ".");
+        List<String> events = new ArrayList<>();
+        if (!turnActive) {
+            events.add("No turn is running.");
+            return events;
+        }
+        turnActive = false;
+
+        // Step 4a: the Cashier charges a customer who finished eating on an earlier turn.
+        cashier.collectPayment(restaurant, turn).ifPresent(c -> events.add(
+                "Cashier charges " + label(c) + " " + Money.format(c.getOrder().getBillCents())
+                + " (satisfaction " + c.getSatisfaction() + "). Their table is free."));
+
+        // Step 4b: customers served on an earlier turn finish eating.
+        for (Customer c : restaurant.presentCustomers()) {
+            if (c.finishEatingIfDone(turn)) {
+                events.add(label(c) + " finishes eating and is ready to pay.");
+            }
+        }
+
+        // Step 5: waiting customers lose satisfaction; anyone at 0 leaves.
+        for (Customer c : restaurant.presentCustomers()) {
+            if (c.applyWaitingLoss(restaurant.getHappyHour())) {
+                restaurant.recordDeparture(c);
+                events.add(label(c) + " has run out of patience and leaves without paying.");
+            }
+        }
+        // Stage 3: Advance Happy Hour countdown.
+restaurant.getHappyHour().tick();
+        return events;
     }
 
     /**
      * Tells whether all turns have been played.
      *
-     * @return {@code true} after the last turn
+     * @return {@code true} once the last turn has ended
      */
     public boolean isGameOver() {
-        return turn >= MAX_TURNS;
+        return turn >= MAX_TURNS && !turnActive;
     }
 
     /**
@@ -130,13 +334,43 @@ public class GameController {
      * @return {@code true} if the player has won
      */
     public boolean isVictory() {
-        return false;
+        return victoryChecker.check(restaurant);
+    }
+/**
+ * Restores 15 satisfaction to customers still waiting for a table.
+ * Called once at the beginning of each active Happy Hour turn.
+ */
+private void recoverHappyHourSatisfaction() {
+    for (Customer customer : restaurant.getQueue()) {
+        customer.recoverSatisfaction();
+    }
+}
+    private Optional<ActionResult> checkTurn(StaffMember member, String role) {
+        if (!turnActive) {
+            return Optional.of(ActionResult.failure("No turn is running."));
+        }
+        if (member.hasActed()) {
+            return Optional.of(ActionResult.failure("The " + role + " has already acted this turn."));
+        }
+        return Optional.empty();
     }
 
-    private ActionResult stubAction(String message, int customerId) {
-        if (customerId < 1) {
-            return ActionResult.failure("There is no customer C" + customerId + ".");
+    private static ActionResult notHere(int customerId) {
+        return ActionResult.failure("There is no customer C" + customerId + " in the restaurant.");
+    }
+
+    private static CustomerView view(Customer c) {
+        Order o = c.getOrder();
+        if (o == null) {
+            return CustomerView.withoutOrder(c.getId(), c.typeName(),
+                    c.getSatisfaction(), c.getStatus().name());
         }
-        return ActionResult.success("(stub) " + message);
+        return new CustomerView(c.getId(), c.typeName(), c.getSatisfaction(),
+                c.getStatus().name(), o.getItem().displayName(), o.getUnitsDone(),
+                o.getUnitsTotal(), o.getStatus().name());
+    }
+
+    private static String label(Customer c) {
+        return "C" + c.getId() + " (" + c.typeName() + ")";
     }
 }

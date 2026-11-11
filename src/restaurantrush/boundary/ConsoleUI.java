@@ -9,6 +9,9 @@ import restaurantrush.control.CustomerView;
 import restaurantrush.control.GameController;
 import restaurantrush.control.GameSnapshot;
 import restaurantrush.control.TableView;
+import restaurantrush.entity.Money;
+
+import restaurantrush.entity.VictoryChecker;
 
 /**
  * The command-line interface: shows the game state and collects the
@@ -24,10 +27,10 @@ public class ConsoleUI {
     private static final String LINE = "=".repeat(60);
     private static final String THIN = "-".repeat(60);
 
-    private static final int VICTORY_PAID = 4;
-    private static final int VICTORY_REVENUE_CENTS = 4500;
-    private static final int VICTORY_SATISFACTION = 60;
-
+    private static final int VICTORY_PAID = VictoryChecker.TARGET_PAID;
+    private static final int VICTORY_REVENUE_CENTS = VictoryChecker.TARGET_REVENUE_CENTS;
+    private static final int VICTORY_SATISFACTION = VictoryChecker.TARGET_SATISFACTION;
+    
     private final GameController controller;
     private final InputReader input;
     private final PrintStream out;
@@ -63,6 +66,32 @@ public class ConsoleUI {
         printEvents(controller.startTurn());
         GameSnapshot state = controller.snapshot();
         showTurnStart(state);
+out.println();
+int turnsLeft = controller.getHappyHourTurnsLeft();
+
+if (turnsLeft > 0) {
+    out.println("HAPPY HOUR ACTIVE - "
+            + turnsLeft + " turn(s) remaining");
+}
+if (!controller.isHappyHourUsed()) {
+
+    out.println("HAPPY HOUR");
+    out.println("  1. Activate Happy Hour (20% discount for 2 turns)");
+    out.println("  0. Do not activate");
+
+    int happyHourChoice = input.readInt("  Choose: ", 0, 1);
+
+    if (happyHourChoice == 1) {
+        ActionResult result = controller.activateHappyHour();
+
+        out.println("  "
+                + (result.ok() ? "" : "Not allowed: ")
+                + result.message());
+    }
+}
+        out.println();
+out.println("HOST (one seating task this turn)");
+askUntilAccepted(this::hostChoice);
 
         out.println();
         out.println("WAITER (one task this turn)");
@@ -89,6 +118,19 @@ public class ConsoleUI {
             }
         }
     }
+
+private ActionResult hostChoice() {
+    out.println("  1. Seat the first waiting customer");
+    out.println("  0. Wait");
+
+    int option = input.readInt("  Choose: ", 0, 1);
+
+    if (option == 1) {
+        return controller.hostSeat();
+    }
+
+    return controller.hostWait();
+}
 
     private ActionResult waiterChoice() {
         out.println("  1. Seat a waiting customer");
@@ -149,6 +191,7 @@ public class ConsoleUI {
         }
         out.println("Staff: Waiter 1 task | Chef 1 preparation unit | Cashier automatic");
         out.println(THIN);
+        showMenu(new restaurantrush.entity.Menu());
     }
 
     private void showTurnEnd(GameSnapshot s) {
@@ -195,9 +238,26 @@ public class ConsoleUI {
      * @return the formatted amount
      */
     static String money(int cents) {
-        return String.format("$%d.%02d", cents / 100, cents % 100);
+        return Money.format(cents);
     }
+    private void showMenu(restaurantrush.entity.Menu menu) {
+        out.println("Available Menu Items:");
+        for (restaurantrush.entity.Orderable item : menu.items()) {
+            String prefix = " - ";
+            
+            // Check if this specific item is actually a ComboMeal
+            if (item instanceof restaurantrush.entity.ComboMeal) {
+                prefix = " [COMBO] ";
+            }
 
+            out.printf(prefix + "%-7s : %5s (%d turns)%n",
+                item.displayName(),
+                money(item.priceCents()),
+                item.prepUnits()
+            );
+        }
+        out.println(THIN);
+    }   
     private static String average(OptionalDouble value) {
         return value.isPresent() ? String.format("%.1f", value.getAsDouble()) : "N/A";
     }

@@ -20,7 +20,7 @@ skinparam note {
   BorderColor #B8A040
 }
 
-title Restaurant Rush: class diagram (v3 draft)
+title Restaurant Rush: class diagram (v5 draft)
 
 package "Boundary" #F4F4F4 {
   class ConsoleUI {
@@ -45,6 +45,7 @@ package "Boundary" #F4F4F4 {
 package "Control" #F4F4F4 {
   class GameController {
     + {static} MAX_TURNS : int = 18
+    + {static} TABLE_COUNT : int = 2
     - turn : int
     + startTurn() : List<String>
     + snapshot() : GameSnapshot
@@ -92,23 +93,39 @@ package "Control" #F4F4F4 {
   }
 
   class ArrivalSchedule {
-    - arrivalTurns : int[]
-    + customerArrivingOn(turn : int) : Customer
+    - {static} ARRIVAL_TURNS : int[]
+    - {static} ARRIVAL_TYPES : List<IntFunction<Customer>>
+    - nextId : int
+    + customerArrivingOn(turn : int) : Optional<Customer>
   }
 }
 
 package "Entity" #F4F4F4 {
   class Restaurant {
-    - revenueCents : int
+    + {static} TARGET_PAID : int = 4
+    + {static} TARGET_REVENUE_CENTS : int = 4500
+    + {static} TARGET_SATISFACTION : int = 60
     - queue : Deque<Customer>
     - paidCustomers : List<Customer>
-    + freeTable() : Table
+    - revenueCents : int
+    - servedCount : int
+    - departures : int
+    + addArrival(c : Customer) : void
+    + seat(c : Customer, t : Table) : void
+    + recordServed() : void
+    + recordPayment(c : Customer) : void
+    + recordDeparture(c : Customer) : void
+    + findPresentCustomer(id : int) : Optional<Customer>
+    + presentCustomers() : List<Customer>
+    + freeTable() : Optional<Table>
+    + tableOf(c : Customer) : Optional<Table>
     + averageSatisfaction() : OptionalDouble
     + isVictory() : boolean
+    + getMenu() : Menu
   }
 
   class Table {
-    - id : int
+    - number : int
     - occupant : Customer
     + isFree() : boolean
     + seat(c : Customer) : void
@@ -116,43 +133,66 @@ package "Entity" #F4F4F4 {
   }
 
   abstract class Customer {
+    + {static} MAX_SATISFACTION : int = 100
     - id : int
     - satisfaction : int
     - status : CustomerStatus
     - servedTurn : int
     - readyToPayTurn : int
     + {abstract} waitingPenalty() : int
+    + {abstract} typeName() : String
     + discountPercent() : int
     + chooseFood(menu : Menu) : Orderable
-    + onServed(o : Order, turn : int) : void
-    + loseSatisfaction(points : int) : void
+    + billFor(dish : Orderable) : int
+    # onServed(o : Order, turn : int) : String
+    + seat() : void
+    + placeOrder(o : Order) : void
+    + receiveDish(turn : int) : String
+    + finishEatingIfDone(turn : int) : boolean
+    + canPay(turn : int) : boolean
+    + pay() : void
+    + applyWaitingLoss() : boolean
+    # adjustSatisfaction(change : int) : void
   }
 
   class RegularCustomer {
     + waitingPenalty() : int
+    + typeName() : String
   }
 
   class VIPCustomer <<Stage 2>> #E8F0FE {
+    - {static} PENALTY : int = 12
+    - {static} DISCOUNT_PERCENT : int = 10
     + waitingPenalty() : int
     + discountPercent() : int
+    + typeName() : String
   }
 
   class CriticCustomer <<Stage 2>> #E8F0FE {
+    - {static} PENALTY : int = 10
+    + {static} GOOD_REVIEW_THRESHOLD : int = 70
+    + {static} REVIEW_SWING : int = 15
     + waitingPenalty() : int
-    + onServed(o : Order, turn : int) : void
+    + typeName() : String
+    # onServed(o : Order, turn : int) : String
   }
 
   class Order {
-    - unitsDone : int
+    - item : Orderable
     - billCents : int
+    - unitsDone : int
     - status : OrderStatus
+    + Order(item : Orderable, billCents : int)
     + advance() : void
+    + serve() : void
+    + markPaid() : void
+    + cancel() : void
     + isReady() : boolean
-    + lockBill(cents : int) : void
+    + getUnitsTotal() : int
   }
 
   interface Orderable {
-    + name() : String
+    + displayName() : String
     + priceCents() : int
     + prepUnits() : int
   }
@@ -161,6 +201,7 @@ package "Entity" #F4F4F4 {
     SALAD
     BURGER
     PASTA
+    - displayName : String
     - priceCents : int
     - prepUnits : int
   }
@@ -176,6 +217,16 @@ package "Entity" #F4F4F4 {
     + items() : List<Orderable>
   }
 
+  class OrderGenerator <<utility>> {
+    + {static} SEED : long = 42
+    + {static} chooseDish(menu : Menu) : Orderable
+  }
+
+  class Money <<utility>> {
+    + {static} format(cents : int) : String
+    + {static} discount(cents : int, percent : int) : int
+  }
+
   class HappyHour <<Stage 3>> #FDEBD0 {
     - turnsLeft : int
     - used : boolean
@@ -188,18 +239,20 @@ package "Entity" #F4F4F4 {
     - usedThisTurn : boolean
     + resetForTurn() : void
     + hasActed() : boolean
+    + skipTurn() : void
+    # markUsed() : void
   }
 
   class Waiter {
-    + seat(c : Customer, t : Table) : ActionResult
-    + takeOrder(c : Customer, menu : Menu, price : int) : ActionResult
-    + serve(o : Order, turn : int) : ActionResult
+    + seat(r : Restaurant, c : Customer, t : Table) : ActionResult
+    + takeOrder(c : Customer, menu : Menu) : ActionResult
+    + serve(c : Customer, turn : int) : ActionResult
   }
   class Chef {
-    + prepare(o : Order) : ActionResult
+    + prepare(customerId : int, o : Order) : ActionResult
   }
   class Cashier {
-    + collectPayment(r : Restaurant, turn : int) : void
+    + collectPayment(r : Restaurant, turn : int) : Optional<Customer>
   }
   class Host <<Stage 3>> #FDEBD0 {
     + seat(c : Customer, t : Table) : ActionResult
@@ -234,6 +287,7 @@ GameSnapshot *-- "2" TableView : tables
 TableView --> "0..1" CustomerView : occupant
 GameController ..> ActionResult : returns
 GameController --> "1" ArrivalSchedule
+ArrivalSchedule ..> Customer : creates
 GameController --> "1" Restaurant
 GameController --> "0..1" HappyHour
 GameController *-- "1..*" StaffMember : staff
@@ -252,6 +306,7 @@ Customer --> CustomerStatus
 Order --> "1" Orderable : item
 Order --> OrderStatus
 Menu o-- "3..*" Orderable
+Customer ..> OrderGenerator : chooseFood() uses
 
 Orderable <|.. MenuItem
 Orderable <|.. ComboMeal
@@ -275,6 +330,11 @@ note right of Customer
   New customer types need no controller change.
 end note
 
+note bottom of CriticCustomer
+  <b>Critic review</b> (onServed): satisfaction
+  >= 70 when served: +15; below 70: -15.
+end note
+
 note bottom of ComboMeal
   <b>Composition</b>: a combo is built from two
   Orderables; price = 90% of their sum,
@@ -295,8 +355,8 @@ end note
 
 note left of Order
   <b>Encapsulation</b>: status changes only
-  through advance() and lockBill(); the bill
-  is locked when the order is taken.
+  through advance(), serve(), markPaid() and
+  cancel(); the bill is locked in the constructor.
 end note
 
 legend right
