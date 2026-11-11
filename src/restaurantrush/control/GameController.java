@@ -13,7 +13,9 @@ import restaurantrush.entity.Restaurant;
 import restaurantrush.entity.StaffMember;
 import restaurantrush.entity.Table;
 import restaurantrush.entity.Waiter;
+import restaurantrush.entity.Host;
 import restaurantrush.entity.VictoryChecker; 
+
 /**
  * Runs the six steps of each turn and applies all game rules.
  *
@@ -41,9 +43,10 @@ public class GameController {
     private final Restaurant restaurant = new Restaurant(TABLE_COUNT);
     private final ArrivalSchedule arrivals = new ArrivalSchedule();
     private final Waiter waiter = new Waiter();
-    private final Chef chef = new Chef();
-    private final Cashier cashier = new Cashier();
-    private final List<StaffMember> staff = List.of(waiter, chef, cashier);
+private final Host host = new Host();
+private final Chef chef = new Chef();
+private final Cashier cashier = new Cashier();
+   private final List<StaffMember> staff = List.of(waiter, host, chef, cashier);
     private int turn;
     private boolean turnActive;
     private final VictoryChecker victoryChecker = new VictoryChecker();
@@ -71,6 +74,10 @@ public class GameController {
             restaurant.addArrival(c);
             events.add(label(c) + " arrives and joins the waiting queue.");
         });
+// Recovery during the second Happy Hour turn.
+if (restaurant.getHappyHour().isActive()) {
+    recoverHappyHourSatisfaction();
+}
         return events;
     }
 
@@ -94,6 +101,42 @@ public class GameController {
                 restaurant.getServedCount(), restaurant.getDepartures(),
                 queueViews, tableViews);
     }
+
+/**
+ * Host task: seats the first customer in the waiting queue.
+ * The Host can perform at most one task per turn.
+ */
+public ActionResult hostSeat() {
+
+    Optional<ActionResult> refused = checkTurn(host, "Host");
+
+    if (refused.isPresent()) {
+        return refused.get();
+    }
+
+    if (restaurant.getQueue().isEmpty()) {
+        return ActionResult.failure("No customers are waiting.");
+    }
+
+    Customer customer = restaurant.getQueue().get(0);
+
+    return host.seat(customer, restaurant);
+}
+/**
+ * Host skips their task for this turn.
+ */
+public ActionResult hostWait() {
+
+    Optional<ActionResult> refused = checkTurn(host, "Host");
+
+    if (refused.isPresent()) {
+        return refused.get();
+    }
+
+    host.skipTurn();
+
+    return ActionResult.success("Host waits.");
+}
 
     /**
      * Waiter task: seats a waiting customer at the first free table.
@@ -132,7 +175,11 @@ public class GameController {
         if (customer.isEmpty()) {
             return notHere(customerId);
         }
-        return waiter.takeOrder(customer.get(), restaurant.getMenu(),null);
+        return waiter.takeOrder(
+    customer.get(),
+    restaurant.getMenu(),
+    restaurant.getHappyHour()
+);
     }
 
     /**
@@ -200,7 +247,39 @@ public class GameController {
             return ActionResult.success("Chef waits.");
         });
     }
+/**
+ * Activates Happy Hour for the current turn and the next turn.
+ * Can only be activated once per game.
+ *
+ * @return whether Happy Hour was successfully activated
+ */
+public ActionResult activateHappyHour() {
 
+    if (!turnActive) {
+        return ActionResult.failure(
+            "Happy Hour can only be activated during an active turn."
+        );
+    }
+
+    if (!restaurant.getHappyHour().activate()) {
+        return ActionResult.failure(
+            "Happy Hour has already been used."
+        );
+    }
+
+recoverHappyHourSatisfaction();
+
+    return ActionResult.success(
+        "Happy Hour activated! 20% discount for 2 turns."
+    );
+}
+public int getHappyHourTurnsLeft() {
+    return restaurant.getHappyHour().getTurnsLeft();
+}
+
+public boolean isHappyHourUsed() {
+    return restaurant.getHappyHour().isUsed();
+}
     /**
      * Steps 4 and 5: customers finish eating and the Cashier charges one
      * customer who is ready to pay; then everyone still waiting for service
@@ -230,11 +309,13 @@ public class GameController {
 
         // Step 5: waiting customers lose satisfaction; anyone at 0 leaves.
         for (Customer c : restaurant.presentCustomers()) {
-            if (c.applyWaitingLoss(null)) {
+            if (c.applyWaitingLoss(restaurant.getHappyHour())) {
                 restaurant.recordDeparture(c);
                 events.add(label(c) + " has run out of patience and leaves without paying.");
             }
         }
+        // Stage 3: Advance Happy Hour countdown.
+restaurant.getHappyHour().tick();
         return events;
     }
 
@@ -255,7 +336,15 @@ public class GameController {
     public boolean isVictory() {
         return victoryChecker.check(restaurant);
     }
-
+/**
+ * Restores 15 satisfaction to customers still waiting for a table.
+ * Called once at the beginning of each active Happy Hour turn.
+ */
+private void recoverHappyHourSatisfaction() {
+    for (Customer customer : restaurant.getQueue()) {
+        customer.recoverSatisfaction();
+    }
+}
     private Optional<ActionResult> checkTurn(StaffMember member, String role) {
         if (!turnActive) {
             return Optional.of(ActionResult.failure("No turn is running."));

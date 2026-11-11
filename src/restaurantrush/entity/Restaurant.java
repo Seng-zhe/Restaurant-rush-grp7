@@ -20,6 +20,8 @@ public class Restaurant {
    
 
     private final Menu menu = new Menu();
+private final HappyHour happyHour = new HappyHour();
+
     private final List<Table> tables = new ArrayList<>();
     private final Deque<Customer> queue = new ArrayDeque<>();
     private final List<Customer> paidCustomers = new ArrayList<>();
@@ -212,4 +214,10 @@ public class Restaurant {
     public int getDepartures() {
         return departures;
     }
+/**
+ * Returns the restaurant's Happy Hour manager.
+ */
+public HappyHour getHappyHour() {
+    return this.happyHour;
+}
 }

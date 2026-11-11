@@ -9,7 +9,7 @@ package restaurantrush.entity;
  */
 public class VIPCustomer extends Customer {
 
-    private static final int PENALTY = 12;
+    private static final int PENALTY = 5;
     private static final int DISCOUNT_PERCENT = 10;
 
     /**

@@ -66,6 +66,32 @@ public class ConsoleUI {
         printEvents(controller.startTurn());
         GameSnapshot state = controller.snapshot();
         showTurnStart(state);
+out.println();
+int turnsLeft = controller.getHappyHourTurnsLeft();
+
+if (turnsLeft > 0) {
+    out.println("HAPPY HOUR ACTIVE - "
+            + turnsLeft + " turn(s) remaining");
+}
+if (!controller.isHappyHourUsed()) {
+
+    out.println("HAPPY HOUR");
+    out.println("  1. Activate Happy Hour (20% discount for 2 turns)");
+    out.println("  0. Do not activate");
+
+    int happyHourChoice = input.readInt("  Choose: ", 0, 1);
+
+    if (happyHourChoice == 1) {
+        ActionResult result = controller.activateHappyHour();
+
+        out.println("  "
+                + (result.ok() ? "" : "Not allowed: ")
+                + result.message());
+    }
+}
+        out.println();
+out.println("HOST (one seating task this turn)");
+askUntilAccepted(this::hostChoice);
 
         out.println();
         out.println("WAITER (one task this turn)");
@@ -92,6 +118,19 @@ public class ConsoleUI {
             }
         }
     }
+
+private ActionResult hostChoice() {
+    out.println("  1. Seat the first waiting customer");
+    out.println("  0. Wait");
+
+    int option = input.readInt("  Choose: ", 0, 1);
+
+    if (option == 1) {
+        return controller.hostSeat();
+    }
+
+    return controller.hostWait();
+}
 
     private ActionResult waiterChoice() {
         out.println("  1. Seat a waiting customer");
