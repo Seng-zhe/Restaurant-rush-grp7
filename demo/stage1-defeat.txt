@@ -1,56 +1,95 @@
-# Stage 1 defeat run: the manager chooses Wait for every staff task.
-# Nobody is served, C1 and C2 leave unhappy, revenue stays $0.00 -> Defeat.
-# Turn 1
+# Defeat run (Stage 1 scenario, Stage 3 prompts): Happy Hour is never activated
+# and the manager chooses Wait for the Host, the Waiter and the Chef every turn.
+# Nobody is seated: C2 (VIP) leaves at the end of turn 12, C1 at the end of
+# turn 13 and C3 (Critic) at the end of turn 16. Revenue stays $0.00 -> Defeat.
+# Each turn, in order: Happy Hour (1 activate, 0 no; asked until it has been used), Host (1 seat, 0 wait), Waiter choice (and customer number), Chef choice (and customer number).
+# Turn 1: all wait
 0
 0
-# Turn 2
 0
 0
-# Turn 3
+# Turn 2: all wait
 0
 0
-# Turn 4
 0
 0
-# Turn 5
+# Turn 3: all wait
 0
 0
-# Turn 6
 0
 0
-# Turn 7
+# Turn 4: all wait
 0
 0
-# Turn 8
 0
 0
-# Turn 9
+# Turn 5: all wait
 0
 0
-# Turn 10
 0
 0
-# Turn 11
+# Turn 6: all wait
 0
 0
-# Turn 12
 0
 0
-# Turn 13
+# Turn 7: all wait
 0
 0
-# Turn 14
 0
 0
-# Turn 15
+# Turn 8: all wait
 0
 0
-# Turn 16
 0
 0
-# Turn 17
+# Turn 9: all wait
 0
 0
-# Turn 18
+0
+0
+# Turn 10: all wait
+0
+0
+0
+0
+# Turn 11: all wait
+0
+0
+0
+0
+# Turn 12: all wait
+0
+0
+0
+0
+# Turn 13: all wait
+0
+0
+0
+0
+# Turn 14: all wait
+0
+0
+0
+0
+# Turn 15: all wait
+0
+0
+0
+0
+# Turn 16: all wait
+0
+0
+0
+0
+# Turn 17: all wait
+0
+0
+0
+0
+# Turn 18: all wait
+0
+0
 0
 0

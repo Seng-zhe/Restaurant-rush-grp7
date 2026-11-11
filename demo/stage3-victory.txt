@@ -1,0 +1,114 @@
+# Stage 3 victory run: the Host seats every arrival on the turn they arrive, so
+# the Waiter can take the order and the Chef can start cooking on that same turn.
+# Happy Hour is activated on turn 13: the VIP C5 gets both discounts
+# (Burger $15.00, 10% VIP -> $13.50, 20% Happy Hour -> $10.80).
+# C6 orders the Burger & Pasta Combo ($29.70, 3 preparation units) on turn 16;
+# it becomes READY on turn 18, too late to be served.
+# C1-C5 pay $63.90, average satisfaction 89.4 -> Victory.
+# Each turn, in order: Happy Hour (1 activate, 0 no; asked until it has been used), Host (1 seat, 0 wait), Waiter choice (and customer number), Chef choice (and customer number).
+# Turn 1: C1 arrives; Host seats C1; take C1's order (Pasta); Chef 1/2
+0
+1
+2
+1
+1
+1
+# Turn 2: Chef finishes Pasta
+0
+0
+0
+1
+1
+# Turn 3: Serve C1
+0
+0
+3
+1
+0
+# Turn 4: C2 (VIP) arrives; Host seats C2; take order (Salad, $8.10); Chef makes it
+0
+1
+2
+2
+1
+2
+# Turn 5: Serve C2. Cashier charges C1
+0
+0
+3
+2
+0
+# Turn 6: Everyone waits while C2 eats
+0
+0
+0
+0
+# Turn 7: C3 (Critic) arrives; Host seats C3; take order (Pasta); Chef 1/2. Cashier charges C2
+0
+1
+2
+3
+1
+3
+# Turn 8: Chef finishes Pasta
+0
+0
+0
+1
+3
+# Turn 9: Serve C3 (satisfaction 80: glowing review -> 95)
+0
+0
+3
+3
+0
+# Turn 10: C4 arrives; Host seats C4; take order (Salad); Chef makes it
+0
+1
+2
+4
+1
+4
+# Turn 11: Serve C4. Cashier charges C3
+0
+0
+3
+4
+0
+# Turn 12: Everyone waits while C4 eats
+0
+0
+0
+0
+# Turn 13: C5 (VIP) arrives; activate Happy Hour; Host seats C5; take order (Burger, $10.80); Chef makes it. Cashier charges C4
+1
+1
+2
+5
+1
+5
+# Turn 14: Serve C5
+0
+3
+5
+0
+# Turn 15: Everyone waits while C5 eats. Happy Hour is over
+0
+0
+0
+# Turn 16: C6 (Critic) arrives; Host seats C6; take order (Combo, $29.70); Chef 1/3. Cashier charges C5
+1
+2
+6
+1
+6
+# Turn 17: Chef 2/3
+0
+0
+1
+6
+# Turn 18: Chef 3/3: the Combo is READY but there is no turn left to serve it
+0
+0
+1
+6

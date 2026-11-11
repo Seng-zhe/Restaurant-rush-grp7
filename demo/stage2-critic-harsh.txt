@@ -1,83 +1,123 @@
-# Stage 2 harsh-review run: as the victory run, but the Waiter waits on turn 8
-# instead of seating the Critic C3. C3 has waited four turns (100 - 4 x 10 = 60)
-# when served on turn 11, so writes a harsh review (60 -> 45).
-# C1-C4 pay $53.10, average satisfaction 61.3 -> still a narrow Victory
-# (one bad review pulls the average down by 6 points).
-# Each turn: Waiter choice (and customer number), then Chef choice.
-# Turn 1: Seat C1; Chef idle
+# Harsh-review run (Stage 2 scenario, Stage 3 prompts): the Host waits and Happy
+# Hour is never activated. The Waiter serves strictly in arrival order, so the
+# VIP C2 is served on turn 7 (satisfaction 64) and the Critic C3 is only seated
+# on turn 8. C3 has waited four turns (100 - 4 x 10 = 60) when served on turn 11
+# and writes a harsh review (60 -> 45).
+# C1-C5 pay $66.60, average satisfaction 65.0 -> Victory, but with a lower
+# average than stage2-victory.txt (67.3) despite one more paying customer.
+# Each turn, in order: Happy Hour (1 activate, 0 no; asked until it has been used), Host (1 seat, 0 wait), Waiter choice (and customer number), Chef choice (and customer number).
+# Turn 1: C1 arrives; Waiter seats C1; Chef idle
+0
+0
 1
 1
 0
 # Turn 2: Take C1's order (Pasta); Chef 1/2
+0
+0
 2
 1
 1
 1
 # Turn 3: Nothing to serve yet; Chef finishes Pasta
 0
+0
+0
 1
 1
 # Turn 4: C2 (VIP) arrives; serve C1
+0
+0
 3
 1
 0
 # Turn 5: Seat C2
+0
+0
 1
 2
 0
 # Turn 6: Take C2's order (Salad, $8.10); Chef makes it. Cashier charges C1
+0
+0
 2
 2
 1
 2
 # Turn 7: C3 (Critic) arrives; serve C2
+0
+0
 3
 2
 0
-# Turn 8: Waiter waits (C3 left in the queue); Chef idle
+# Turn 8: Seat C3
 0
 0
-# Turn 9: Seat C3. Cashier charges C2
 1
 3
 0
-# Turn 10: C4 arrives; take C3's order (Salad); Chef makes it
+# Turn 9: Take C3's order (Pasta); Chef 1/2. Cashier charges C2
+0
+0
 2
 3
+1
+3
+# Turn 10: C4 arrives; seat C4; Chef finishes Pasta
+0
+0
+1
+4
 1
 3
 # Turn 11: Serve C3 (satisfaction 60: harsh review -> 45)
+0
+0
 3
 3
 0
-# Turn 12: Seat C4
-1
-4
+# Turn 12: Take C4's order (Salad); Chef makes it
 0
-# Turn 13: C5 (VIP) arrives; take C4's order (Pasta); Chef 1/2. Cashier charges C3
+0
 2
 4
 1
 4
-# Turn 14: Seat C5; Chef finishes Pasta
-1
-5
-1
-4
-# Turn 15: Serve C4
+# Turn 13: C5 (VIP) arrives; serve C4. Cashier charges C3
+0
+0
 3
 4
 0
-# Turn 16: C6 (Critic) arrives; take C5's order (Salad, $8.10); Chef makes it
+# Turn 14: Seat C5
+0
+0
+1
+5
+0
+# Turn 15: Take C5's order (Burger, $13.50); Chef makes it. Cashier charges C4
+0
+0
 2
 5
 1
 5
-# Turn 17: Serve C5. Cashier charges C4
+# Turn 16: C6 (Critic) arrives; serve C5
+0
+0
 3
 5
 0
-# Turn 18: Seat C6
+# Turn 17: Seat C6
+0
+0
 1
 6
 0
+# Turn 18: Take C6's order (Burger & Pasta Combo, $29.70); Chef 1/3. Cashier charges C5
+0
+0
+2
+6
+1
+6

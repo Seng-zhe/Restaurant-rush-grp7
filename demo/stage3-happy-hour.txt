@@ -1,0 +1,114 @@
+# Stage 3 Happy Hour run: the same choices as stage2-critic-harsh.txt, but the
+# manager activates Happy Hour on turn 8 while the Critic C3 is still queueing.
+# C3 recovers satisfaction (90 -> 100, capped), is served at 70 and writes a
+# glowing review (70 -> 85) instead of a harsh one. The price: the order taken
+# on turn 9, the second Happy Hour turn, is 20% off (Pasta $18.00 -> $14.40).
+# Once Happy Hour has been used its prompt is no longer shown, so turns 9 to 18
+# have no Happy Hour line.
+# C1-C5 pay $63.00, average satisfaction 73.0 -> Victory.
+# Each turn, in order: Happy Hour (1 activate, 0 no; asked until it has been used), Host (1 seat, 0 wait), Waiter choice (and customer number), Chef choice (and customer number).
+# Turn 1: C1 arrives; Waiter seats C1; Chef idle
+0
+0
+1
+1
+0
+# Turn 2: Take C1's order (Pasta); Chef 1/2
+0
+0
+2
+1
+1
+1
+# Turn 3: Nothing to serve yet; Chef finishes Pasta
+0
+0
+0
+1
+1
+# Turn 4: C2 (VIP) arrives; serve C1
+0
+0
+3
+1
+0
+# Turn 5: Seat C2
+0
+0
+1
+2
+0
+# Turn 6: Take C2's order (Salad, $8.10); Chef makes it. Cashier charges C1
+0
+0
+2
+2
+1
+2
+# Turn 7: C3 (Critic) arrives; serve C2
+0
+0
+3
+2
+0
+# Turn 8: Activate Happy Hour (C3 90 -> 100); seat C3
+1
+0
+1
+3
+0
+# Turn 9: Take C3's order (Pasta, 20% off: $14.40); Chef 1/2. Cashier charges C2
+0
+2
+3
+1
+3
+# Turn 10: C4 arrives; seat C4; Chef finishes Pasta. Happy Hour is over
+0
+1
+4
+1
+3
+# Turn 11: Serve C3 (satisfaction 70: glowing review -> 85)
+0
+3
+3
+0
+# Turn 12: Take C4's order (Salad); Chef makes it
+0
+2
+4
+1
+4
+# Turn 13: C5 (VIP) arrives; serve C4. Cashier charges C3
+0
+3
+4
+0
+# Turn 14: Seat C5
+0
+1
+5
+0
+# Turn 15: Take C5's order (Burger, $13.50); Chef makes it. Cashier charges C4
+0
+2
+5
+1
+5
+# Turn 16: C6 (Critic) arrives; serve C5
+0
+3
+5
+0
+# Turn 17: Seat C6
+0
+1
+6
+0
+# Turn 18: Take C6's order (Burger & Pasta Combo, $29.70); Chef 1/3. Cashier charges C5
+0
+2
+6
+1
+6

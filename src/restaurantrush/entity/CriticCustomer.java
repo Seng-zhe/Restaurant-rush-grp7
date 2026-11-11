@@ -21,7 +21,7 @@ package restaurantrush.entity;
 public class CriticCustomer extends Customer {
 
     /** Satisfaction lost per waiting turn. */
-    private static final int PENALTY = 12;
+    private static final int PENALTY = 10;
 
     /** Minimum satisfaction at serving time for a good review. */
     public static final int GOOD_REVIEW_THRESHOLD = 70;
