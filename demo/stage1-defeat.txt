@@ -1,7 +1,8 @@
 # Defeat run (Stage 1 scenario, Stage 3 prompts): Happy Hour is never activated
 # and the manager chooses Wait for the Host, the Waiter and the Chef every turn.
-# Nobody is seated: C2 (VIP) leaves at the end of turn 12, C1 at the end of
-# turn 13 and C3 (Critic) at the end of turn 16. Revenue stays $0.00 -> Defeat.
+# Nobody is seated: C1 leaves at the end of turn 13 and C3 (Critic) at the end
+# of turn 15. The patient VIPs are still queueing when the game ends.
+# Revenue stays $0.00 -> Defeat.
 # Each turn, in order: Happy Hour (1 activate, 0 no; asked until it has been used), Host (1 seat, 0 wait), Waiter choice (and customer number), Chef choice (and customer number).
 # Turn 1: all wait
 0

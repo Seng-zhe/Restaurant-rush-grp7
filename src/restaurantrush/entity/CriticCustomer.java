@@ -1,7 +1,7 @@
 package restaurantrush.entity;
 
 /**
- * A food critic: loses 10 satisfaction per waiting turn, pays full price and
+ * A food critic: loses 12 satisfaction per waiting turn, pays full price and
  * reviews the restaurant the moment the dish is served.
  *
  * <p><b>Special behaviour (the review).</b> When served, the Critic judges
@@ -15,13 +15,13 @@ package restaurantrush.entity;
  * </ul>
  * <p>A served customer no longer loses satisfaction, so the reviewed value is
  * the one recorded when the Critic pays. In practice the Critic must be
- * served after at most three waiting turns (100 - 3 x 10 = 70) for a good
+ * served after at most two waiting turns (100 - 2 x 12 = 76) for a good
  * review, which gives the manager a reason to put the Critic first.</p>
  */
 public class CriticCustomer extends Customer {
 
     /** Satisfaction lost per waiting turn. */
-    private static final int PENALTY = 10;
+    private static final int PENALTY = 12;
 
     /** Minimum satisfaction at serving time for a good review. */
     public static final int GOOD_REVIEW_THRESHOLD = 70;

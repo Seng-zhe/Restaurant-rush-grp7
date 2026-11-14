@@ -1,15 +1,15 @@
 package restaurantrush.entity;
 
 /**
- * A VIP customer: less patient than a Regular, losing 12 satisfaction per
- * waiting turn, but rewarded with a 10% discount on every bill.
+ * A VIP customer: more patient than a Regular, losing 5 satisfaction per
+ * waiting turn, and rewarded with a 10% discount on every bill.
  *
  * <p>Only the two overridden methods differ from {@link Customer}; the
  * Waiter and the controller treat a VIP like any other customer.</p>
  */
 public class VIPCustomer extends Customer {
 
-    private static final int PENALTY = 12;
+    private static final int PENALTY = 5;
     private static final int DISCOUNT_PERCENT = 10;
 
     /**
