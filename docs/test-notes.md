@@ -12,10 +12,6 @@ check out the tag (`git checkout stage-1` or `stage-2`), where `demo/` holds
 that stage's own input files. Files of the same name on this branch answer the
 extra Stage 3 prompts and give the Stage 3 results listed below.
 
-The Stage 2 section uses the waiting penalties of the `stage-2` tag (VIP 12,
-Critic 10). They were corrected in Stage 3 to **VIP 5, Critic 12**, which is
-what the Stage 3 section and the current code use.
-
 ## Stage 1
 
 ### `demo/stage1-victory.txt`: Victory
@@ -54,34 +50,50 @@ waiting turns at 8 per turn). Result: **DEFEAT**, 0 paid, $0.00.
 ## Stage 2
 
 Customer mix: C1 Regular, C2 VIP, C3 Critic, C4 Regular, C5 VIP, C6 Critic.
+Waiting penalties per turn: Regular 8, VIP 5, Critic 12. The Critic needs to be
+served after at most two waiting turns (100 - 2 x 12 = 76) for a glowing
+review; after three (64) the review is harsh.
 
 ### `demo/stage2-victory.txt`: Victory, glowing review
 
-The same choices as the Stage 1 victory run.
+On turn 7 the Waiter seats the Critic C3 instead of serving the VIP C2, whose
+Salad is already READY. The VIP loses only 5 per turn, so the wait costs little.
 
 | Customer | Type | Dish | Bill | Served (turn) | Satisfaction when paid |
 | --- | --- | --- | --- | --- | --- |
 | C1 | Regular | Pasta | $18.00 | 4  | 76 |
-| C2 | VIP     | Salad | $8.10  | 7  | 64 (12 per waiting turn) |
-| C3 | Critic  | Salad | $9.00  | 10 | 85 (served at 70: glowing review +15) |
-| C4 | Regular | Pasta | $18.00 | 14 | 68 |
-| C5 | VIP     | Salad | $8.10  | 16 | 64 |
-| C6 | Critic  | Burger | -     | -  | - |
+| C2 | VIP     | Salad | $8.10  | 10 | 70 (six waiting turns at 5) |
+| C3 | Critic  | Salad | $9.00  | 9  | 91 (served at 76: glowing review +15) |
+| C4 | Regular | Pasta | $18.00 | 15 | 60 |
+| C5 | VIP     | Salad | $8.10 (unpaid) | 17 | - |
+| C6 | Critic  | -     | -      | -  | - |
 
-Result: **VICTORY**, 5 paid, revenue $61.20, average satisfaction 71.4.
+Result: **VICTORY**, 4 paid, revenue $53.10, average satisfaction 74.3
+(74.25).
 
 ### `demo/stage2-critic-harsh.txt`: harsh review
 
-The Waiter waits on turn 8 instead of seating C3. C3 is served on turn 11 at
-satisfaction 60 (four waiting turns) and writes a harsh review: 60 -> 45.
-Result: **VICTORY** by a narrow margin, 4 paid, $53.10, average satisfaction
-61.3 (76, 64, 45, 60).
+The same choices as the Stage 1 victory run, in strict arrival order. C2 is
+served on turn 7 and the Critic is only seated on turn 8.
+
+| Customer | Type | Dish | Bill | Served (turn) | Satisfaction when paid |
+| --- | --- | --- | --- | --- | --- |
+| C1 | Regular | Pasta | $18.00 | 4  | 76 |
+| C2 | VIP     | Salad | $8.10  | 7  | 85 |
+| C3 | Critic  | Salad | $9.00  | 10 | 49 (served at 64: harsh review -15) |
+| C4 | Regular | Pasta | $18.00 | 14 | 68 |
+| C5 | VIP     | Salad | $8.10  | 16 | 85 |
+| C6 | Critic  | Burger | -     | -  | - |
+
+Result: **VICTORY**, 5 paid, revenue $61.20, average satisfaction 72.6. One
+more customer pays than in the glowing-review run, but the Critic leaves at 49
+and the average is lower.
 
 ### `demo/stage1-defeat.txt` replayed in Stage 2
 
-Every task is Wait. The VIP C2 leaves first (end of turn 12, 9 waiting turns
-at 12), then C1 (end of turn 13) and the Critic C3 (end of turn 16, 10 turns at
-10). Result: **DEFEAT**, 0 paid.
+Every task is Wait. C1 leaves at the end of turn 13 (13 waiting turns at 8) and
+the Critic C3 at the end of turn 15 (9 waiting turns at 12). The VIPs lose only
+5 per turn and are still queueing at the end. Result: **DEFEAT**, 0 paid.
 
 ### Rounding
 
@@ -94,9 +106,7 @@ Each turn the game now asks, in order: Happy Hour (until it has been used),
 Host, Waiter, Chef. The menu has four entries, so the seeded orders are, in the
 order they are taken: Pasta, Salad, Pasta, Salad, Burger, Burger & Pasta Combo.
 
-Waiting penalties per turn: Regular 8, VIP 5, Critic 12. The Critic therefore
-needs to be served after at most two waiting turns (100 - 2 x 12 = 76) for a
-glowing review; after three (64) the review is harsh.
+The waiting penalties are unchanged from Stage 2 (Regular 8, VIP 5, Critic 12).
 
 ### `demo/stage3-victory.txt`: Victory with Host, Happy Hour and Combo
 

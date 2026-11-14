@@ -82,10 +82,10 @@ Compare link: https://github.com/Seng-zhe/Restaurant-rush-grp7/compare/stage-1..
 
 | File | Purpose |
 | --- | --- |
-| `entity/VIPCustomer.java` | Loses 5 satisfaction per waiting turn (12 at the `stage-2` tag); 10% off every bill. Overrides `waitingPenalty()`, `discountPercent()`, `typeName()`. |
-| `entity/CriticCustomer.java` | Loses 12 satisfaction per waiting turn (10 at the `stage-2` tag); reviews the restaurant when served (see Critic rule below). Overrides `waitingPenalty()`, `onServed()`, `typeName()`. |
-| `demo/stage2-victory.txt` | Stage 1 victory choices replayed with the Stage 2 customer mix: the Critic writes a glowing review. |
-| `demo/stage2-critic-harsh.txt` | The Critic is left waiting one extra turn and writes a harsh review. |
+| `entity/VIPCustomer.java` | Loses 5 satisfaction per waiting turn; 10% off every bill. Overrides `waitingPenalty()`, `discountPercent()`, `typeName()`. |
+| `entity/CriticCustomer.java` | Loses 12 satisfaction per waiting turn; reviews the restaurant when served (see Critic rule below). Overrides `waitingPenalty()`, `onServed()`, `typeName()`. |
+| `demo/stage2-victory.txt` | The Waiter seats the Critic ahead of serving the patient VIP: the Critic writes a glowing review. |
+| `demo/stage2-critic-harsh.txt` | Stage 1 victory choices in strict arrival order: the Critic waits one turn too long and writes a harsh review. |
 
 **Existing files changed or deleted**
 
@@ -123,12 +123,11 @@ Compare link: https://github.com/Seng-zhe/Restaurant-rush-grp7/compare/stage-2..
 | `entity/Customer.java` | `billFor(dish, happyHour)` applies the Happy Hour discount after the customer's own discount; added `recoverSatisfaction()`; `applyWaitingLoss` takes the `HappyHour`. | Happy Hour changes the bill and restores satisfaction to queueing customers. |
 | `entity/Waiter.java` | `takeOrder` takes the `HappyHour` and passes it to `billFor`. | The bill locked into the order depends on whether Happy Hour is active. |
 | `entity/Menu.java` | Adds the Burger & Pasta Combo to the menu; `addComboMeal()` enabled. | Customers can now choose a combo. |
-| `entity/VIPCustomer.java`, `entity/CriticCustomer.java` | Waiting penalties corrected to 5 (VIP) and 12 (Critic); they were 12 and 10 at the `stage-2` tag. | The Stage 2 values were wrong: the VIP is the patient customer and the Critic the impatient one. |
 | `entity/Restaurant.java` | Owns the `HappyHour`; victory targets moved out to `VictoryChecker`. | One shared Happy Hour state for the controller, Waiter and customers. |
 | `demo/*.txt` | Regenerated with the Happy Hour and Host answers on every turn. | The Stage 2 input files no longer lined up with the Stage 3 prompts. |
 | `docs/test-notes.md` | Added the Stage 3 runs. | Keep the documentation in step with the code. |
 
-`Order`, `Chef`, `Cashier` and `ArrivalSchedule` are unchanged, and the customer subclasses changed only in their penalty constants: a `ComboMeal` is cooked, served and paid for through the `Orderable` interface like any other dish.
+`Order`, `Chef`, `Cashier`, `ArrivalSchedule` and the three customer subclasses are unchanged: a `ComboMeal` is cooked, served and paid for through the `Orderable` interface like any other dish.
 
 ## Documented rules
 
@@ -137,7 +136,7 @@ Compare link: https://github.com/Seng-zhe/Restaurant-rush-grp7/compare/stage-2..
 - **Timing:** a dish served on turn *t* is eaten during turn *t*+1 and paid for at the end of turn *t*+2. Satisfaction is recorded when the customer pays.
 - **Cashier:** works automatically but, like all staff, does one task per turn. If two customers can pay in the same turn, the one at the lower-numbered table pays first.
 - **Refused choices:** an invalid choice (wrong customer, no free table, dish not READY) is explained and the manager chooses again; the staff task is not used up.
-- **Customer mix (Stage 2):** arrivals C1 to C6 are Regular, VIP, Critic, Regular, VIP, Critic. Waiting penalties per turn: Regular 8, VIP 5, Critic 12. (The `stage-2` tag used VIP 12 and Critic 10; the values were corrected in Stage 3.)
+- **Customer mix (Stage 2):** arrivals C1 to C6 are Regular, VIP, Critic, Regular, VIP, Critic. Waiting penalties per turn: Regular 8, VIP 5, Critic 12.
 - **VIP discount:** VIPs pay 10% less on every bill. The discount is applied when the order is taken and locked into the bill.
 - **Critic special behaviour:** the Critic writes a review the moment their dish is served, judged on their satisfaction at that moment, which already counts every turn they waited. At **70 or more** (served after at most 2 waiting turns: 100 - 2 x 12 = 76) the review is glowing and satisfaction goes **up 15** (max 100). Below 70 the review is harsh and satisfaction goes **down 15** (min 0). Served customers lose no more satisfaction, so the reviewed value is the one recorded when the Critic pays. This makes serving the Critic quickly a real priority.
 - **Host (Stage 3):** the Host has one task per turn, separate from the Waiter's, and is asked before the Waiter. The Host always seats the customer at the front of the queue at the first free table; the Waiter can still seat any waiting customer. A customer seated by the Host can have their order taken by the Waiter on the same turn.
